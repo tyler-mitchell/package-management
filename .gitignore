@@ -1,0 +1,68 @@
+# Build Output
+.next
+dist
+**/storybook-static
+
+# Dependencies
+node_modules
+**/node_modules
+
+# Docker Compose Data
+apps/**/data/**
+servers/**/data/**
+
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# ESLint Cache
+.eslintcache
+
+# Generated Code
+**/generated
+**/prisma/schema.prisma
+
+# Playwright E:E Tests
+**/playwright/.cache
+**/playwright-report
+
+# System Files
+.DS_Store
+
+# Test Results
+coverage
+test-results
+
+# Turbo Command Output
+.turbo
+
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+.env
+
+

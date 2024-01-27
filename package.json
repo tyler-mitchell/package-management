@@ -1,0 +1,22 @@
+{
+  "name": "monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Universal and programmatic package management (pnpm, bun, yarn, npm)",
+  "scripts": {
+    "dev": "pnpm --filter=gitdrops run dev",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "patch": "npx pnpm-patch-i",
+    "publish:package-management": "pnpm --filter=package-management run npm-publish"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "2.6.3",
+    "@gitdrops/eslint": "^0.0.2",
+    "@types/node": "^20.5.1",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.2"
+  }
+}
