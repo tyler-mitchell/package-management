@@ -12,6 +12,9 @@ Package Management
 <sub><em>A package manager agnostic interface for programmatically managing packages (npm, yarn, bun, and pnpm)<br/> Install, uninstall, detect, import, and manage packages.</em></sub>
 </p>
 
+> [!IMPORTANT]  
+> Work in progress...
+
 ## Install
 
 ```
