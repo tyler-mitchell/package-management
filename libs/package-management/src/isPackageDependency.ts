@@ -1,6 +1,6 @@
 import { toArray } from "@/utils";
-import { isPackageExists } from "local-pkg";
+import { isDependencyInPackageJson } from "@/project";
 
 export function isPackageDependency(packageName: string | string[]) {
-  return toArray(packageName).every((name) => isPackageExists(name));
+  return toArray(packageName).every((name) => isDependencyInPackageJson(name));
 }

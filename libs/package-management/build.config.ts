@@ -2,13 +2,13 @@ import { resolve } from "node:path";
 import { defineBuildConfig } from "unbuild";
 
 export default defineBuildConfig({
+  clean: true,
+  declaration: true,
+  failOnWarn: false,
   rollup: {
     inlineDependencies: true,
   },
-  clean: true,
-  declaration: true,
   alias: {
     "@": resolve(__dirname, "./src"),
   },
-  failOnWarn: false,
 });

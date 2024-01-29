@@ -1,20 +1,20 @@
 import type { SelectionMap } from "..";
-import type { PackageManager } from "./definePackageManager";
+import type { PackageManager, PackageManagers } from "./definePackageManager";
 import type { PackageManagerId } from "./package-managers";
-import { packageManagers } from "./package-managers";
 import { invariant, notFalsy } from "@/utils";
 
-interface DetectPackageManagerOptions {
-  allowed?: SelectionMap<typeof packageManagers>;
+export interface DetectPackageManagerOptions {
+  allowed?: SelectionMap<Record<PackageManagerId, unknown>>;
   cwd?: string;
 }
 
 export async function findPackageManager(
+  packageManagers: PackageManagers,
   options?: DetectPackageManagerOptions
 ) {
   const { ...rest } = options ?? {};
 
-  const packageManager = await findPackageManagerSafely(rest);
+  const packageManager = await findPackageManagerSafely(packageManagers, rest);
 
   invariant(packageManager, "No package manager found");
 
@@ -22,57 +22,71 @@ export async function findPackageManager(
 }
 
 export async function findPackageManagerSafely<TAssert extends boolean = true>(
+  packageManagers: PackageManagers,
   options?: DetectPackageManagerOptions & {
     assert?: TAssert;
   }
 ) {
-  const lockfilePm = (await detectLockfilePackageManagers(options))[0];
+  const lockfilePm = (
+    await detectLockfilePackageManagers(packageManagers, options)
+  )[0];
 
   if (lockfilePm) {
     return lockfilePm;
   }
 
-  const globalPm = (await detectGlobalPackageManagers(options))[0];
+  const globalPm = (
+    await detectGlobalPackageManagers(packageManagers, options)
+  )[0];
 
   return globalPm;
 }
 
 export async function detectPackageManagers(
+  packageManagers: PackageManagers,
   options?: DetectPackageManagerOptions
 ) {
   return [
-    ...(await detectLockfilePackageManagers(options)),
-    ...(await detectGlobalPackageManagers(options)),
+    ...(await detectLockfilePackageManagers(packageManagers, options)),
+    ...(await detectGlobalPackageManagers(packageManagers, options)),
   ];
 }
 
 export async function detectLockfilePackageManagers(
+  packageManagers: PackageManagers,
   options?: DetectPackageManagerOptions
 ) {
-  const opts = { cwd: options?.cwd };
-  return filterPackageManagers((e) => e.hasLockfile(options), options);
+  return filterPackageManagers(
+    packageManagers,
+    (e) => e.hasLockfile(options),
+    options
+  );
 }
 
 export async function detectGlobalPackageManagers(
+  packageManagers: PackageManagers,
   options?: DetectPackageManagerOptions
 ) {
-  return filterPackageManagers(async (e) => e.globalVersion(options), options);
+  return filterPackageManagers(
+    packageManagers,
+    async (e) => Boolean(e.globalVersion(options)),
+    options
+  );
 }
 
 export async function filterPackageManagers(
-  filterFn: (packageManager: PackageManager) => Promise<unknown>,
+  packageManagers: PackageManagers,
+  filterFn: (packageManager: PackageManager) => Promise<boolean> | boolean,
   options?: DetectPackageManagerOptions
 ) {
-  const allowedPackageManagers = Object.entries(packageManagers).filter(
-    ([key]) => {
-      if (!options?.allowed) return true;
-      return key in options.allowed;
-    }
-  );
+  const allowedPackageManagers = packageManagers.filter(({ id }) => {
+    if (!options?.allowed) return true;
+    return id in options.allowed;
+  });
 
   return (
     await Promise.all(
-      allowedPackageManagers.map(async ([key, pm]) => {
+      allowedPackageManagers.map(async (pm) => {
         const valid = await filterFn(pm);
 
         return valid ? pm : undefined;

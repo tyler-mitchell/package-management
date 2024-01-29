@@ -1,6 +1,10 @@
 import type { AsyncCacheFn as _AsyncCacheFn } from "async-cache-fn";
 export type __<T> = { [K in keyof T]: T[K] } & {};
 
+export type Func = (...args: any[]) => any;
+
+export type StringLiteral<T extends string> = T | (string & {});
+
 export type Awaitable<T> = T | Promise<T>;
 
 export type ResolvedPromise<T> = T extends Promise<infer U> ? U : never;
@@ -72,11 +76,8 @@ export type MergeObject<
   O extends object | unknown = unknown,
 > = __<T & (O extends object ? O : Record<never, never>)>;
 
-export type AsyncCacheFn<
-  TReturn = unknown,
-  TOption extends object | undefined = undefined,
-  C extends "required" | "optional" = "optional",
-> = _AsyncCacheFn<
-  TReturn,
-  C extends "optional" ? [TOption | undefined] | [] : [TOption]
->;
+export type OmitIndexSignature<ObjectType> = {
+  [KeyType in keyof ObjectType as {} extends Record<KeyType, unknown>
+    ? never
+    : KeyType]: ObjectType[KeyType];
+};

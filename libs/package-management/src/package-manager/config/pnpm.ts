@@ -1,6 +1,6 @@
-import { definePackageManager } from "../definePackageManager";
+import { definePackageManagerConfig } from "./_define";
 
-export default definePackageManager({
+export default definePackageManagerConfig({
   id: "pnpm",
   name: "PNPM",
   command: "pnpm",
@@ -12,12 +12,12 @@ export default definePackageManager({
     install: {
       command: "install",
       options: {
-        isDevDependency: "-D",
+        dev: "-D",
         preferOffline: "--prefer-offline",
       },
     },
     uninstall: {
-      command: "uninstall",
+      command: "remove",
     },
   },
   options: {

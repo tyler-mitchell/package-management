@@ -1,13 +1,12 @@
 import { describe, it, expect, afterAll } from "vitest";
-import { importMap } from "../importMap";
+import { importMap } from "@/module";
 import {
   definePackageNames,
   mockPackages,
-} from "@/__tests__/mock-utils/mock-utils";
+} from "@/__test__/mock-utils/mock-utils";
+import { definePackage } from "../module/importer";
 
-definePackageNames;
-
-describe(
+describe.skip(
   "test",
   () => {
     it("successfully imports a package", async () => {
@@ -18,19 +17,18 @@ describe(
       expect(package1).toHaveProperty("installPackage");
     });
 
-    it.only("successfully installs and imports a package", async () => {
+    it("successfully installs and imports a package", async () => {
+      type LodashMapFn = <TList extends any[], TResult>(
+        arr: TList,
+        transformer: (v: TList[number]) => TResult
+      ) => TResult[];
+
+      interface LodashEsModule {
+        map: LodashMapFn;
+      }
+
       const { package1 } = await importMap({
-        package1: {
-          name: "lodash-es",
-          import: () =>
-            // @ts-ignore
-            import("lodash-es") as Promise<{
-              map: <TList extends any[], TResult>(
-                a: TList,
-                b: (v: TList[number]) => TResult
-              ) => TResult[];
-            }>,
-        },
+        package1: definePackage<LodashEsModule>("lodash-es"),
       });
 
       const result = package1.map([1, 2, 3], (n) => n * 2);

@@ -5,6 +5,8 @@ const config = await defineEslintConfig({
   rules: {
     "ts/ban-types": "off",
     "ts/no-unnecessary-type-constraint": "off",
+    "ts/ban-ts-comment": "off",
+    "ts/prefer-ts-expect-error": "off",
   },
 });
 

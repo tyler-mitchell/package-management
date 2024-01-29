@@ -1,6 +1,6 @@
-import { definePackageManager } from "../definePackageManager";
+import { definePackageManagerConfig } from "./_define";
 
-export default definePackageManager({
+export default definePackageManagerConfig({
   id: "yarn-berry",
   name: "Yarn Berry",
   command: "yarn",
@@ -12,7 +12,7 @@ export default definePackageManager({
     install: {
       command: "add",
       options: {
-        isDevDependency: "-D",
+        dev: "-D",
         preferOffline: "--cached",
       },
     },

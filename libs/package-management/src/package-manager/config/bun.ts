@@ -1,6 +1,6 @@
-import { definePackageManager } from "../definePackageManager";
+import { definePackageManagerConfig } from "./_define";
 
-export default definePackageManager({
+export default definePackageManagerConfig({
   id: "bun",
   name: "Bun",
   command: "bun",
@@ -12,7 +12,7 @@ export default definePackageManager({
     install: {
       command: "install",
       options: {
-        isDevDependency: "-D",
+        dev: "-D",
         preferOffline: "--prefer-offline",
       },
     },

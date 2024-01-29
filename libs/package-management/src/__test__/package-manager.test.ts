@@ -1,11 +1,11 @@
-import {
+import { describe, it, expect } from "vitest";
+import { workspace } from "@/workspace";
+
+const {
+  findPackageManager,
   detectGlobalPackageManagers,
   detectLockfilePackageManagers,
-  findPackageManager,
-} from "@/package-manager/detectPackageManager";
-import { describe, it, expect } from "vitest";
-import { findUp } from "find-up";
-import { isPackageDependency } from "..";
+} = workspace.getProject("@package");
 
 describe("package-manager", () => {
   it("detects global package managers", async () => {
@@ -31,6 +31,7 @@ describe("package-manager", () => {
     };
 
     expect(allowedPackageManagers.global).toHaveLength(0);
+
     expect(allowedPackageManagers.local).toHaveLength(0);
   });
 

@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { importer } from "../importer";
+import { importer } from "@/module";
 
-describe("test", () => {
+describe("importer", () => {
   it("successfully imports a package", async () => {
-    const [package1] = await importer([import("@antfu/install-pkg")]);
+    const [package1] = await importer([() => import("@antfu/install-pkg")]);
 
     expect(package1).toHaveProperty("installPackage");
   });

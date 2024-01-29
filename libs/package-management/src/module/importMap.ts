@@ -1,6 +1,17 @@
-import type { ImportMap, ResolvedImportMap } from "@/types";
+import type {
+  ImportMap,
+  ResolvedImportMap,
+  ResolvedImportMapPromise,
+} from "./import-types";
 import type { ImporterOptions } from "./importer";
 import { importer } from "./importer";
+
+export interface ImportMapOptions extends ImporterOptions {}
+
+export type ImportMapFn = <T extends ImportMap>(
+  importMap: T,
+  options?: ImportMapOptions
+) => ResolvedImportMapPromise<T>;
 
 /**
  * Asynchronously imports modules from a record of dynamic import promises.
@@ -24,11 +35,8 @@ import { importer } from "./importer";
  * ```
  *
  */
-export async function importMap<T extends ImportMap>(
-  importMap: T,
-  options?: ImporterOptions
-): Promise<ResolvedImportMap<T>> {
-  const keys = Object.keys(importMap) as Array<keyof T>;
+export const importMap: ImportMapFn = async (importMap, options) => {
+  const keys = Object.keys(importMap);
 
   const imported = await importer(
     keys.map((key) => importMap[key]) as Promise<any>[],
@@ -37,5 +45,5 @@ export async function importMap<T extends ImportMap>(
 
   return Object.fromEntries(
     keys.map((key, index) => [key, imported[index]])
-  ) as Promise<ResolvedImportMap<T>>;
-}
+  ) as ResolvedImportMap<typeof importMap>;
+};

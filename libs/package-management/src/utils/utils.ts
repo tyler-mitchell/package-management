@@ -5,7 +5,10 @@ import type {
   EntryOf,
   FromEntries,
   __,
+  Func,
+  PickByValue,
 } from "@/types";
+import { normalize as crossEnvPathNormalizer } from "pathe";
 import { promises as fs } from "node:fs";
 
 export { execa as $$ } from "execa";
@@ -42,6 +45,23 @@ export const select = <
   return fromEntries(filtered) as never;
 };
 
+export function defaults<
+  T extends object,
+  D extends
+    | {
+        [K in keyof T as undefined extends T[K] ? K : never]: T[K];
+      }
+    | undefined,
+>(obj: T | undefined, defaults: D): __<T & NonNullable<D>> {
+  return Object.assign({}, defaults, obj);
+}
+
+interface A {
+  a?: boolean;
+  b?: boolean;
+  c: boolean;
+}
+
 export async function pathExists(p: string) {
   try {
     await fs.access(p);
@@ -49,6 +69,21 @@ export async function pathExists(p: string) {
   } catch {
     return false;
   }
+}
+
+export function normalizePath(
+  path: string,
+  option?: boolean | ((path: string) => string)
+) {
+  if (typeof option === "function") {
+    return normalizePath(path);
+  }
+
+  if (option === false) {
+    return path;
+  }
+
+  return crossEnvPathNormalizer(path);
 }
 
 export function isVersionNumber(version: string) {
