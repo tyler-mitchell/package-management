@@ -5,7 +5,7 @@ const {
   findPackageManager,
   detectGlobalPackageManagers,
   detectLockfilePackageManagers,
-} = workspace.getProject("@package");
+} = workspace.getProject("<package_folder>");
 
 describe("package-manager", () => {
   it("detects global package managers", async () => {

@@ -1,6 +1,6 @@
 import type { Awaitable } from "@/types";
 import type { ResolveOptions } from "mlly";
-import { resolvePathSync } from "mlly";
+import { resolvePathSync, fileURLToPath } from "mlly";
 import { normalizePath } from "@/utils";
 
 export async function resolveModule<T>(

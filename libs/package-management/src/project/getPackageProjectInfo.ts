@@ -1,11 +1,11 @@
-import { getPackageDirectory } from "./getPackageDirectory";
+import { getPackageFolder } from "../path/getPackageFolder";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { PackageInfo, PackageJson } from "./project-types";
+import type { PathOptions } from "..";
 
-export function getPackageInfo(options?: { cwd?: string }) {
-  const { cwd } = options ?? {};
-  const packageDir = getPackageDirectory({ cwd });
+export function getPackageInfo(options?: PathOptions) {
+  const packageDir = getPackageFolder(options);
   return readPackageInfo({ packageDir });
 }
 

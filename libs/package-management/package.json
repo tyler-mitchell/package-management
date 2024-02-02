@@ -1,7 +1,8 @@
 {
   "name": "package-management",
   "description": "Simple type-safe utilities for programatically installing and importing packages",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "type": "module",
   "private": false,
   "files": [
     "dist/**"
@@ -18,28 +19,47 @@
     "build:watch": "tsc --watch --preserveWatchOutput",
     "dev": "unbuild --stub",
     "lint": "eslint",
-    "test": "vitest",
+    "lint:fix": "eslint --fix",
+    "test": "vitest --fileParallelism=false",
+    "test:bench": "vitest bench",
+    "test:silent": "vitest --reporter=./vitest-reporter.ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf .tsbuildinfo .turbo coverage dist node_modules",
     "npm-publish": "pnpm run build && npm publish  --access public --no-git-checks"
   },
   "devDependencies": {
+    "@sourcegraph/scip-typescript": "^0.3.12",
     "@types/node": "20.5.9",
+    "citty": "^0.1.5",
+    "jiti": "^1.21.0",
+    "tsl": "^0.0.9",
+    "tsx": "^4.7.0",
+    "type-level-regexp": "^0.1.17",
     "typescript": "^5.3.2",
     "unbuild": "^2.0.0",
     "vite-tsconfig-paths": "^4.3.1",
-    "vitest": "^0.34.6"
+    "vitest": "^1.2.2"
   },
   "dependencies": {
     "@antfu/install-pkg": "^0.3.1",
+    "@types/error-stack-parser": "^2.0.0",
+    "arktype": "2.0.0-dev.1",
     "async-cache-fn": "^0.0.3",
+    "error-stack-parser": "^2.1.4",
     "execa": "^8.0.1",
     "find-up": "^7.0.0",
+    "get-current-line": "^7.4.0",
     "globby": "^14.0.0",
+    "jsonc-parser": "^3.2.1",
     "local-pkg": "^0.5.0",
+    "lru-cache": "^10.2.0",
+    "magic-regexp": "^0.7.0",
     "mlly": "^1.5.0",
     "parse-gitignore": "^2.0.0",
     "pathe": "^1.1.2",
+    "string-ts": "^2.0.0",
+    "ts-regex-builder": "^1.0.1",
+    "unstorage": "^1.10.1",
     "workspace-tools": "^0.36.4",
     "yaml": "^2.3.4"
   }

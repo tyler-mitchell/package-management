@@ -1,6 +1,14 @@
 import type { AsyncCacheFn as _AsyncCacheFn } from "async-cache-fn";
 export type __<T> = { [K in keyof T]: T[K] } & {};
 
+export type ValueOf<T> = T[keyof T];
+
+export type EnumToLiteral<T extends string | number> = T extends string
+  ? `${T}`
+  : `${T}` extends `${infer N extends number}`
+    ? N
+    : never;
+
 export type Func = (...args: any[]) => any;
 
 export type StringLiteral<T extends string> = T | (string & {});
@@ -12,6 +20,8 @@ export type ResolvedPromise<T> = T extends Promise<infer U> ? U : never;
 export type KeyOf<T, K> = K extends keyof T ? K : never;
 
 export type KeyOfValue<T, K> = T[KeyOf<T, K>];
+
+export type PickKeyOf<T, K extends keyof T> = K extends keyof T ? K : never;
 
 export type SelectionMap<T> = __<{
   [K in keyof T]?: boolean;
@@ -81,3 +91,21 @@ export type OmitIndexSignature<ObjectType> = {
     ? never
     : KeyType]: ObjectType[KeyType];
 };
+
+export type RequireExactlyOne<
+  ObjectType,
+  KeysType extends keyof ObjectType = keyof ObjectType,
+> = {
+  [Key in KeysType]: Required<Pick<ObjectType, Key>> &
+    Partial<Record<Exclude<KeysType, Key>, never>>;
+}[KeysType] &
+  Omit<ObjectType, KeysType>;
+
+export type OmitNever<T> = Omit<
+  T,
+  { [K in keyof T]: T[K] extends never ? K : never }[keyof T]
+> & {};
+
+export type OmitByValue<T, V> = OmitNever<{
+  [K in keyof T]: T[K] extends V ? never : T[K];
+}>;

@@ -6,6 +6,6 @@ import process from "node:process";
  * Finds the nearest `package.json` directory, starting from `cwd`
  *
  */
-export function getPackageDirectory(options?: { cwd?: string }) {
+export function getPackageFolder(options?: { cwd?: string }) {
   return WST.findPackageRoot(options?.cwd ?? process.cwd())!;
 }

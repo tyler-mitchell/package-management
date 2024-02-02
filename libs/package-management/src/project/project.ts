@@ -2,8 +2,8 @@ import path from "pathe";
 import type { Func, PathOptions } from "@/types";
 import type { PackageName } from "./project-types";
 import { getProjectInfoByName } from "./getProjectInfoByName";
-import { getPackageInfo } from "./getPackageInfo";
-import { getRootProjectInfo } from "./getRootProjectInfo";
+import { getPackageInfo } from "./getPackageProjectInfo";
+import { getWorkspaceProjectInfo } from "./getWorkspaceProjectInfo";
 import { tsconfig } from "@/tsconfig/tsconfig";
 import { gitignore } from "@/gitignore";
 import {
@@ -11,11 +11,14 @@ import {
   isDependencyInPackageJson,
   findDependencyInPackageJson,
 } from "./findDependencyInPackageJson";
-import { getProjectInfo, type ProjectSourceType } from "./getProjectInfo";
+import { getProjectInfo, type ProjectFolderTypeOption } from "./getProjectInfo";
 import { findPackageManager } from "..";
 import { definePackageManagerClient } from "@/package-manager/package-managers";
 
-export type ProjectParams = [source: ProjectSourceType, options?: PathOptions];
+export type ProjectParams = [
+  source: ProjectFolderTypeOption,
+  options?: PathOptions,
+];
 
 export const project = (...args: ProjectParams) => {
   const [source, projectOptions] = args;

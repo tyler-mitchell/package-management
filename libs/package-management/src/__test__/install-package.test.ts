@@ -1,19 +1,14 @@
-import { describe, it, expect, beforeAll } from "vitest";
-import { isPackageDependency } from "..";
+import { describe, it, expect, beforeAll, bench } from "vitest";
 import { mockPackages } from "./mock-utils";
 import { workspace } from "@/workspace";
 
 const { getPackageName, getPackageNames, uninstall } = mockPackages;
 
-const project = workspace.getProject("@package");
+const project = workspace.getProject("<package_folder>");
 
 const packageManager = await project.findPackageManager();
 
 describe("install and uninstall packages", () => {
-  // beforeAll(async () => {
-  //   uninstall();
-  // });
-
   it(
     "should install and uninstall package",
     async () => {
@@ -74,7 +69,6 @@ describe("install and uninstall packages", () => {
         }),
       });
 
-      lodash;
       const user = {
         name: "john",
       };

@@ -7,6 +7,8 @@ const config = await defineEslintConfig({
     "ts/no-unnecessary-type-constraint": "off",
     "ts/ban-ts-comment": "off",
     "ts/prefer-ts-expect-error": "off",
+    "no-template-curly-in-string": "off",
+    "no-console": "off",
   },
 });
 

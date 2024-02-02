@@ -111,7 +111,7 @@ async function installImport(
 
   const installerFn =
     installer ??
-    (await workspace.getProject("@package").findPackageManager())
+    (await workspace.getProject("<package_folder>").findPackageManager())
       .installPackage;
 
   await installerFn(packageName, options);

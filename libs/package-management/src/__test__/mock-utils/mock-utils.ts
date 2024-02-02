@@ -11,7 +11,7 @@ export function definePackageNames<const T extends string[]>(packages: T) {
     uninstall: async (name?: string) => {
       const toUninstall = name ? [name] : packages;
       const packageManager = await workspace
-        .getProject("@package")
+        .getProject("<package_folder>")
         .findPackageManager();
       await packageManager.uninstallPackage(toUninstall);
     },

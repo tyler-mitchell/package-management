@@ -5,13 +5,9 @@ import type {
   EntryOf,
   FromEntries,
   __,
-  Func,
-  PickByValue,
 } from "@/types";
 import { normalize as crossEnvPathNormalizer } from "pathe";
 import { promises as fs } from "node:fs";
-
-export { execa as $$ } from "execa";
 
 export const toArray = <t>(data: t) =>
   (Array.isArray(data) ? data : [data]) as t extends readonly unknown[]
@@ -100,3 +96,17 @@ export const invariant: Invariant = (predicate, message) => {
     throw new Error(message);
   }
 };
+
+export function getArrayItemAtOffset<T>(
+  arr?: T[],
+  index?: number,
+  offset: number = 0
+) {
+  if (!index || !arr) return undefined;
+  return arr[index + offset];
+}
+
+export function isMatching(a: string | undefined, b: string | undefined) {
+  if (!a || !b) return false;
+  return a === b;
+}

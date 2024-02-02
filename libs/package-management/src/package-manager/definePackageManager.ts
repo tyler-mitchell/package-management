@@ -1,22 +1,21 @@
-import type { AsyncCacheFn as _AsyncCacheFn } from "async-cache-fn";
-import type { AsyncCacheFn } from "@/types";
-import { __ } from "@/types";
-import type { ImportMap, ResolvedImportMapPromise } from "@/module";
-import { select, notFalsy, toArray } from "@/utils";
-import { asyncCacheFn } from "async-cache-fn";
 import type { Options as ShellOptions } from "execa";
-import { execa } from "execa";
-import { findUp } from "find-up";
-import { readFile } from "node:fs/promises";
+import type { AsyncCacheFn as _AsyncCacheFn } from "async-cache-fn";
+import type { AsyncCacheFn, __ } from "@/types";
+import type { ImportMap, ResolvedImportMapPromise } from "@/module";
 import type { PackageManagerId } from "./package-managers";
 import type { DefinePackageFn } from "..";
-import { definePackage, isPackageDependency } from "..";
-import { importMap } from "@/module/importMap";
 import type {
   PackageManagerConfig,
   PackageManagerScriptOptions,
   UninstallPackageOptions,
 } from "./package-manager-types";
+import { select, notFalsy, toArray } from "@/utils";
+import { asyncCacheFn } from "async-cache-fn";
+import { execa } from "execa";
+import { findUp } from "find-up";
+import { readFile } from "node:fs/promises";
+import { definePackage } from "..";
+import { importMap } from "@/module/importMap";
 
 export type PackageManagers = PackageManager<PackageManagerId>[];
 

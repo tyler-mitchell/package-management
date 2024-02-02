@@ -4,36 +4,60 @@
   ],
   "include": [
     "src/**/*.ts",
-    "./vitest.config.ts"
+    "./vitest.config.ts",
+    "src/path/getPackageNameDirectory",
+    "src/__test__/importer.test.ts",
+    "vitest-reporter.ts"
   ],
   "compilerOptions": {
+    // Paths
     "baseUrl": ".",
+    "outDir": "dist",
     "paths": {
       "@/*": [
         "./src/*"
       ],
     },
-    "skipDefaultLibCheck": true,
-    "outDir": "dist",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "target": "es2022",
-    "allowJs": true,
-    "resolveJsonModule": true,
-    "moduleDetection": "force",
-    "isolatedModules": true,
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "sourceMap": true,
-    "declaration": true,
-    "moduleResolution": "Bundler",
-    "module": "ESNext",
-    "noEmit": true,
-    "lib": [
-      "es2022"
-    ],
     "types": [
       "@types/node"
-    ]
+    ],
+    // Strictness
+    "strict": true,
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "noUncheckedIndexedAccess": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowUnreachableCode": false,
+    "noFallthroughCasesInSwitch": true,
+    "noStrictGenericChecks": false,
+    "noImplicitReturns": false,
+    "noImplicitUseStrict": false,
+    "allowUnusedLabels": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    // Module
+    "resolveJsonModule": true,
+    "skipDefaultLibCheck": true,
+    "moduleDetection": "force",
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    // Output
+    "sourceMap": true,
+    "noEmit": true,
+    "declaration": true,
+    // Environment
+    "lib": [
+      "esnext"
+    ],
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "node",
+    // "lib": [
+    //   "es2022"
+    // ],
+    // "moduleResolution": "node",
+    // "module": "ESNext",
   }
 }
