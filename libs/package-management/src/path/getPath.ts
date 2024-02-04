@@ -50,5 +50,3 @@ import { predefinedPathAliases } from "./predefinedPathAliases";
  *    > - Example: `/Users/username/Projects/monorepo/package-folder/src/utils`
  */
 export const getPath = definePathVariables(predefinedPathAliases).getFilePath;
-
-getPath(["<workspace_folder>/node_modules/.bin"]);

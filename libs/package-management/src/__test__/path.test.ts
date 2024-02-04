@@ -8,14 +8,14 @@ const CURRENT_FILE_PATH = __filename;
 
 const CURRENT_DIR_PATH = __dirname;
 
-describe.only("path tests", () => {
+describe("path tests", () => {
   it("should return the path to the current file: <current_file>", () => {
     const filePath1 = getPath({ to: ["<current_file>"] });
 
     expect(filePath1).toBe(CURRENT_FILE_PATH);
   });
 
-  it.only("should return the path to the current folder: <current_folder>", () => {
+  it("should return the path to the current folder: <current_folder>", () => {
     const dirname = getPath({ to: ["<current_folder>"] });
     expect(dirname).toBe(CURRENT_DIR_PATH);
   });
@@ -26,6 +26,14 @@ describe.only("path tests", () => {
     })!;
 
     expect(filePath).toBe(CURRENT_FILE_PATH);
+  });
+
+  it("should return path to cwd", () => {
+    const filePath = getPath({
+      to: ["<cwd>"],
+    })!;
+
+    expect(filePath).toBe(process.cwd());
   });
 
   it("relative path should work", () => {

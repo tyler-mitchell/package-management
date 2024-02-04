@@ -1,7 +1,7 @@
 {
   "name": "package-management",
   "description": "Simple type-safe utilities for programatically installing and importing packages",
-  "version": "0.0.2",
+  "version": "0.0.6",
   "type": "module",
   "private": false,
   "files": [
@@ -50,6 +50,7 @@
     "find-up": "^7.0.0",
     "get-current-line": "^7.4.0",
     "globby": "^14.0.0",
+    "is-odd": "^3.0.1",
     "jsonc-parser": "^3.2.1",
     "local-pkg": "^0.5.0",
     "lru-cache": "^10.2.0",

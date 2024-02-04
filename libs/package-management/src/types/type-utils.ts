@@ -109,3 +109,5 @@ export type OmitNever<T> = Omit<
 export type OmitByValue<T, V> = OmitNever<{
   [K in keyof T]: T[K] extends V ? never : T[K];
 }>;
+
+export type NoInfer<T> = [T][T extends any ? 0 : never];

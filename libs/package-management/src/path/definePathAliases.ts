@@ -2,8 +2,7 @@ import { existsSync } from "node:fs";
 import path from "pathe";
 import { resolveAlias } from "pathe/utils";
 import { globbySync } from "globby";
-import type { Func, MergeObject, StringLiteral, ValueOf, __ } from "@/types";
-import { toArray } from "@/utils";
+import type { NoInfer, __ } from "@/types";
 
 export interface AliasDefinition {
   resolve: ResolvePathAliasFn;

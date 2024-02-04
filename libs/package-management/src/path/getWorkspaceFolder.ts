@@ -24,7 +24,7 @@ export function getWorkspaceFolder<$ThrowIfNotFound extends boolean = true>(
   } = options ?? {};
 
   const getFolder = fallbackToGitRoot
-    ? WST.getWorkspaceRoot
+    ? WST.findProjectRoot
     : WST.getWorkspaceRoot;
 
   const folder = getFolder(cwd);
@@ -35,5 +35,3 @@ export function getWorkspaceFolder<$ThrowIfNotFound extends boolean = true>(
 
   return folder!;
 }
-
-const a = getWorkspaceFolder();
