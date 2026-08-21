@@ -12,7 +12,7 @@ export function getWorkspacePackageInfoList(
 ) {
   const { workspaceDir, resolveWstList } = common(options);
 
-  const wstList = WST.getWorkspaces(workspaceDir);
+  const wstList = WST.getWorkspaceInfos(workspaceDir);
 
   return resolveWstList(wstList);
 }
@@ -22,7 +22,7 @@ export async function getPackageInfoListAsync(
 ) {
   const { workspaceDir, resolveWstList } = common(options);
 
-  const wstList = await WST.getWorkspacesAsync(workspaceDir);
+  const wstList = await WST.getWorkspaceInfosAsync(workspaceDir);
 
   return resolveWstList(wstList);
 }
@@ -31,8 +31,10 @@ function common(options?: GetPackageInfoListOptions) {
   const { cwd, includeRoot: includeWorkspace } = options ?? {};
   const workspaceDir = getWorkspaceFolder({ cwd });
 
-  function resolveWstList(list: WST.WorkspaceInfo) {
-    if (!workspaceDir) return [];
+  // `getWorkspaceInfos` reports `undefined` when the directory is not a
+  // workspace, which is a normal outcome rather than a failure.
+  function resolveWstList(list: WST.WorkspaceInfos | undefined) {
+    if (!workspaceDir || !list) return [];
 
     if (includeWorkspace) return [getWorkspaceProjectInfo(), ...list];
 

@@ -1,86 +1,69 @@
-import { describe, it, expect, beforeAll, bench } from "vitest";
+import { describe, it, expect } from "vitest";
 import { mockPackages } from "./mock-utils";
 import { workspace } from "@/workspace";
 
-const { getPackageName, getPackageNames, uninstall } = mockPackages;
+const { getPackageName } = mockPackages;
 
 const project = workspace.getProject("<package_folder>");
 
 const packageManager = await project.findPackageManager();
 
-describe("install and uninstall packages", () => {
-  it(
-    "should install and uninstall package",
-    async () => {
-      const packageName = getPackageName("lodash-es");
+describe("install and uninstall packages", { timeout: 20000 }, () => {
+  it("should install and uninstall package", async () => {
+    const packageName = getPackageName("lodash-es");
 
-      await packageManager.uninstallPackage(packageName);
+    await packageManager.uninstallPackage(packageName);
 
-      expect(project.isDependencyInPackageJson(packageName)).toBe(false);
+    expect(project.isDependencyInPackageJson(packageName)).toBe(false);
 
-      await packageManager.installPackage(packageName);
+    await packageManager.installPackage(packageName);
 
-      expect(project.isDependencyInPackageJson(packageName)).toBe(true);
+    expect(project.isDependencyInPackageJson(packageName)).toBe(true);
 
-      await packageManager.uninstallPackage(packageName);
+    await packageManager.uninstallPackage(packageName);
 
-      expect(project.isDependencyInPackageJson(packageName)).toBe(false);
-    },
-    {
-      timeout: 20000,
-    }
-  );
-  it(
-    "should install and uninstalll multiple packages",
-    async () => {
-      const packageNames = ["lodash-es", "is-odd"];
+    expect(project.isDependencyInPackageJson(packageName)).toBe(false);
+  });
 
-      await packageManager.uninstallPackage(packageNames);
+  it("should install and uninstall multiple packages", async () => {
+    const packageNames = ["lodash-es", "is-odd"];
 
-      packageNames.forEach((name) => {
-        const exists = project.isDependencyInPackageJson(name);
-        expect(exists).toBe(false);
-      });
+    await packageManager.uninstallPackage(packageNames);
 
-      await packageManager.installPackage(packageNames);
+    packageNames.forEach((name) => {
+      const exists = project.isDependencyInPackageJson(name);
+      expect(exists).toBe(false);
+    });
 
-      packageNames.forEach((name) => {
-        const exists = project.isDependencyInPackageJson(name);
+    await packageManager.installPackage(packageNames);
 
-        expect(exists).toBe(true);
-      });
+    packageNames.forEach((name) => {
+      const exists = project.isDependencyInPackageJson(name);
 
-      await packageManager.uninstallPackage(packageNames);
-    },
-    {
-      timeout: 20000,
-    }
-  );
+      expect(exists).toBe(true);
+    });
 
-  it(
-    "should be able to install and import modules using an import map",
-    async () => {
-      const { definePackage: $, defineImportMap } = packageManager;
-      await packageManager.uninstallPackage("lodash-es");
+    await packageManager.uninstallPackage(packageNames);
+  });
 
-      const { lodash } = await defineImportMap({
-        lodash: $<{ get: (v: object, key: string) => any }>({
-          name: "lodash-es",
-        }),
-      });
+  it("should be able to install and import modules using an import map", async () => {
+    const { definePackage: $, defineImportMap } = packageManager;
+    await packageManager.uninstallPackage("lodash-es");
 
-      const user = {
-        name: "john",
-      };
+    const { lodash } = await defineImportMap({
+      lodash: $<{ get: (v: object, key: string) => any }>({
+        name: "lodash-es",
+      }),
+    });
 
-      const username = lodash.get(user, "name");
+    const user = {
+      name: "john",
+    };
 
-      expect(username).toBe("john");
+    const username = lodash.get(user, "name");
 
-      await packageManager.uninstallPackage("lodash-es");
-    },
-    {
-      timeout: 20000,
-    }
-  );
+    expect(username).toBe("john");
+
+    await packageManager.uninstallPackage("lodash-es");
+  });
 });

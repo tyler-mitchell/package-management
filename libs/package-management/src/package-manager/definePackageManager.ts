@@ -3,7 +3,7 @@ import type { AsyncCacheFn as _AsyncCacheFn } from "async-cache-fn";
 import type { AsyncCacheFn, __ } from "@/types";
 import type { ImportMap, ResolvedImportMapPromise } from "@/module";
 import type { PackageManagerId } from "./package-managers";
-import type { DefinePackageFn } from "..";
+import type { DefinePackageFn } from "@/module/importer";
 import type {
   PackageManagerConfig,
   PackageManagerScriptOptions,
@@ -16,8 +16,16 @@ import { findUp } from "find-up";
 import { readFile } from "node:fs/promises";
 import { definePackage } from "..";
 import { importMap } from "@/module/importMap";
+import { getPackageInfo } from "@/project/getPackageProjectInfo";
+import { isDependencyInPackageJson } from "@/project/findDependencyInPackageJson";
 
-export type PackageManagers = PackageManager<PackageManagerId>[];
+/**
+ * A set of package managers. Generic over the id so that managers built with
+ * `definePackageManager` from a custom config are accepted everywhere the
+ * built-in ones are, without a cast.
+ */
+export type PackageManagers<$id extends string = PackageManagerId> =
+  PackageManager<$id>[];
 
 export interface PackageManager<ID extends string = PackageManagerId> {
   id: ID;
@@ -72,15 +80,15 @@ export function definePackageManager<ID extends string>(
   ) => {
     const install = agentArgs.install;
 
+    // @ts-expect-error
     const { dev, preferOffline } = select(
       install.options,
       {
         preferOffline: true,
-
         cwd: defaultCwd,
         ...options,
       },
-      "pick"
+      "true:pick"
     );
 
     const packageNames = toArray(packageName);
@@ -92,8 +100,10 @@ export function definePackageManager<ID extends string>(
         cwd: defaultCwd,
         ...options,
       });
-    } catch (e) {
-      throw new Error(`Failed to install: ${packageNames.join(", ")}`);
+    } catch (error) {
+      throw new Error(`Failed to install: ${packageNames.join(", ")}`, {
+        cause: error,
+      });
     }
   };
 
@@ -103,18 +113,35 @@ export function definePackageManager<ID extends string>(
   ) => {
     const uninstall = agentArgs.uninstall;
 
-    await Promise.all(
-      toArray(packageName).map(async (name) => {
-        try {
-          await $$({
-            command,
-            args: [uninstall.command, name],
-            cwd: defaultCwd,
-            ...options,
-          });
-        } catch (e) {}
-      })
+    const cwd = options?.cwd ?? defaultCwd;
+
+    const { packageJson } = getPackageInfo({ cwd });
+
+    // Removing something that was never installed is a no-op, not a failure —
+    // but package managers exit non-zero for it. Narrowing to what is actually
+    // declared keeps the operation idempotent without a blanket `catch`, which
+    // would also swallow genuine failures.
+    const installed = toArray(packageName).filter((name) =>
+      isDependencyInPackageJson(name, packageJson)
     );
+
+    if (installed.length === 0) return;
+
+    // One invocation for the whole set, matching `installPackage`. Running the
+    // manager once per name spawns concurrent processes against the same
+    // `node_modules`, and their interleaved writes corrupt its own metadata.
+    try {
+      await $$({
+        command,
+        args: [uninstall.command, ...installed],
+        cwd,
+        ...options,
+      });
+    } catch (error) {
+      throw new Error(`Failed to uninstall: ${installed.join(", ")}`, {
+        cause: error,
+      });
+    }
   };
 
   return {
@@ -180,6 +207,9 @@ async function $$(options: {
   return execa(command, args.filter(notFalsy), {
     cwd,
     ...shellOptions,
-    stdio: silent ? "ignore" : "inherit",
+    // `pipe` keeps output off the console while still capturing it: a failed
+    // command can report why it failed, and `globalVersion` can read stdout.
+    // `ignore` discards the reason along with the output.
+    stdio: silent ? "pipe" : "inherit",
   });
 }

@@ -8,6 +8,9 @@ import { definePackage } from "../module/importer";
 
 describe.skip(
   "test",
+  {
+    timeout: 10000,
+  },
   () => {
     it("successfully imports a package", async () => {
       const { package1 } = await importMap({
@@ -37,9 +40,6 @@ describe.skip(
 
       await mockPackages.uninstall("lodash-es");
     });
-  },
-  {
-    timeout: 10000,
   }
 );
 

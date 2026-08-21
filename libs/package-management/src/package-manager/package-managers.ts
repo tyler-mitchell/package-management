@@ -6,6 +6,7 @@ import bun from "./config/bun";
 import npm from "./config/npm";
 import pnpm from "./config/pnpm";
 import yarn from "./config/yarn";
+import type { Awaitable } from "@/types";
 import {
   findPackageManager,
   findPackageManagerSafely,
@@ -13,6 +14,8 @@ import {
   detectLockfilePackageManagers,
   detectGlobalPackageManagers,
   filterPackageManagers,
+  mapPackageManagers,
+  getGlobalVersions,
 } from "@/package-manager/detectPackageManager";
 
 export type PackageManagerId = (typeof packageManagerConfigs)[number]["id"];
@@ -54,9 +57,19 @@ export function definePackageManagerClient(
         detectGlobalPackageManagers(configs, options)
     ),
 
+    globalVersions: asyncCacheFn(
+      async (options?: DetectPackageManagerOptions) =>
+        getGlobalVersions(configs, options)
+    ),
+
     filterPackageManagers: async (
-      filterFn: (packageManager: PackageManager) => Promise<boolean> | boolean,
+      filterFn: (packageManager: PackageManager) => Awaitable<boolean>,
       options?: DetectPackageManagerOptions
     ) => filterPackageManagers(configs, filterFn, options),
+
+    mapPackageManagers: async <$result>(
+      mapFn: (packageManager: PackageManager) => Awaitable<$result>,
+      options?: DetectPackageManagerOptions
+    ) => mapPackageManagers(configs, mapFn, options),
   };
 }

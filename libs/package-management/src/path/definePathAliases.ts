@@ -89,20 +89,27 @@ function getAliasedFilePath<
   : TGlob extends true
     ? string | undefined
     : string {
+  const { to, startingFrom, cwd, checkExistence, glob } =
+    typeof options === "string" || Array.isArray(options)
+      ? ({ to: options } as GetPathOptions<
+          StringKeyOf<TAliasMap>,
+          TValidate,
+          TGlob
+        >)
+      : options;
+
+  const resolveOptions = { cwd, checkExistence, glob, aliasMap };
+
   try {
-    if (typeof options === "string" || Array.isArray(options)) {
-      return resolvePathTo(options, { aliasMap });
-    }
-
-    const opts = { ...options, aliasMap };
-
-    if (opts.startingFrom) {
-      return resolveRelativePathTo(opts.to, opts.startingFrom, opts);
-    }
-
-    return resolvePathTo(opts.to, opts);
-  } catch (e) {
-    return undefined as any;
+    return startingFrom
+      ? resolveRelativePathTo(to, startingFrom, resolveOptions)
+      : resolvePathTo(to, resolveOptions);
+  } catch (error) {
+    // `checkExistence` and `glob` are the only modes whose return type admits
+    // `undefined`. Swallowing anything else reports a missing path as an empty
+    // result and hands callers a `string` that is not one.
+    if (checkExistence || glob) return undefined as never;
+    throw error;
   }
 }
 
@@ -151,17 +158,39 @@ function normalizePathTo(
   }
 ) {
   const { cwd, aliasMap } = options ?? {};
-  if (Array.isArray(pathTo)) {
-    const [baseDir] = pathTo;
 
-    const aliasedPath = path.join(...pathTo.filter(isNotNull));
+  const aliasedPath = Array.isArray(pathTo)
+    ? path.join(...pathTo.filter(isNotNull))
+    : pathTo;
 
-    return resolveAlias(aliasedPath, {
-      [baseDir]: executeMapFn(aliasMap, baseDir, [{ cwd }]),
-    });
+  // The tuple form names its alias positionally; the string form carries the
+  // alias as a prefix (`"<package_folder>/src"`), so it has to be recovered.
+  const baseDir = Array.isArray(pathTo)
+    ? pathTo[0]
+    : findAliasToken(aliasedPath, aliasMap);
+
+  // A bare string that matches no alias is a literal path, not a broken alias.
+  if (baseDir === undefined) return aliasedPath;
+
+  const baseDirPath = executeMapFn(aliasMap, baseDir, [{ cwd }]);
+
+  if (typeof baseDirPath !== "string" || baseDirPath.length === 0) {
+    throw new Error(`Path alias resolved to no location: ${baseDir}`);
   }
 
-  return pathTo;
+  return resolveAlias(aliasedPath, { [baseDir]: baseDirPath });
+}
+
+/**
+ * Recovers the alias a bare-string path is written against, so that
+ * `"<package_folder>/src"` resolves the same way `["<package_folder>", "src"]`
+ * does. Longest match wins, so a subpath alias such as
+ * `"<package_folder>/node_modules"` is preferred over its parent.
+ */
+function findAliasToken(pathTo: string, aliasMap?: AliasMap) {
+  return Object.keys(aliasMap ?? {})
+    .filter((alias) => pathTo === alias || pathTo.startsWith(`${alias}/`))
+    .sort((a, b) => b.length - a.length)[0];
 }
 
 function executeMapFn<

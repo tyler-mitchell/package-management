@@ -1,5 +1,5 @@
 import path from "pathe";
-import type { Func, PathOptions } from "@/types";
+import type { AnyFunction, PathOptions } from "@/types";
 import type { PackageName } from "./project-types";
 import { getProjectInfoByName } from "./getProjectInfoByName";
 import { getPackageInfo } from "./getPackageProjectInfo";
@@ -30,8 +30,10 @@ export const project = (...args: ProjectParams) => {
     detectPackageManagers,
     detectLockfilePackageManagers,
     detectGlobalPackageManagers,
+    globalVersions,
 
     filterPackageManagers,
+    mapPackageManagers,
   } = definePackageManagerClient({ cwd: projectDir });
 
   return {
@@ -50,6 +52,10 @@ export const project = (...args: ProjectParams) => {
     detectGlobalPackageManagers,
 
     detectLockfilePackageManagers,
+
+    globalVersions,
+
+    mapPackageManagers,
 
     tsconfig: tsconfig(projectDir ?? ""),
 

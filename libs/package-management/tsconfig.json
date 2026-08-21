@@ -1,17 +1,17 @@
 {
   "exclude": [
     "node_modules",
+    "dist"
   ],
   "include": [
     "src/**/*.ts",
     "./vitest.config.ts",
-    "src/path/getPackageNameDirectory",
-    "src/__test__/importer.test.ts",
-    "vitest-reporter.ts"
+    "./build.config.ts"
   ],
   "compilerOptions": {
     // Paths
-    "baseUrl": ".",
+    // `baseUrl` was removed in TypeScript 7; `paths` entries now resolve
+    // relative to this file, which is what they already did here.
     "outDir": "dist",
     "paths": {
       "@/*": [
@@ -30,9 +30,7 @@
     "forceConsistentCasingInFileNames": true,
     "allowUnreachableCode": false,
     "noFallthroughCasesInSwitch": true,
-    "noStrictGenericChecks": false,
     "noImplicitReturns": false,
-    "noImplicitUseStrict": false,
     "allowUnusedLabels": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
@@ -53,11 +51,8 @@
     ],
     "target": "es2022",
     "module": "esnext",
-    "moduleResolution": "node",
-    // "lib": [
-    //   "es2022"
-    // ],
-    // "moduleResolution": "node",
-    // "module": "ESNext",
+    // The package ships through a bundler and imports without file extensions,
+    // so `bundler` mirrors how Rollup and Vite actually resolve these imports.
+    "moduleResolution": "bundler"
   }
 }

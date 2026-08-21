@@ -25,7 +25,7 @@ export function getWorkspaceFolder<$ThrowIfNotFound extends boolean = true>(
 
   const getFolder = fallbackToGitRoot
     ? WST.findProjectRoot
-    : WST.getWorkspaceRoot;
+    : WST.getWorkspaceManagerRoot;
 
   const folder = getFolder(cwd);
 

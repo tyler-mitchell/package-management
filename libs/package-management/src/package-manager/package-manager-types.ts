@@ -1,4 +1,4 @@
-import type { KeyOfValue, SelectionMap, __ } from "@/types";
+import type { ValueKeyOf, SelectionMap, __ } from "@/types";
 import type { Options as ShellOptions } from "execa";
 export interface PackageManagerConfig<ID extends string = string> {
   id: ID;
@@ -34,7 +34,7 @@ export type PackageManagerCommands = PackageManagerConfig["args"];
 export type PackageManagerCommandName = keyof PackageManagerCommands;
 
 export type PackageManagerCommandSpec<K> =
-  KeyOfValue<PackageManagerCommands, K> extends { options: infer O }
+  ValueKeyOf<PackageManagerCommands, K> extends { options: infer O }
     ? SelectionMap<O>
     : Record<never, never>;
 

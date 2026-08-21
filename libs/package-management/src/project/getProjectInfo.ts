@@ -1,7 +1,11 @@
-import type { Func, PathOptions } from "@/types";
+import type { AnyFunction, PathOptions } from "@/types";
 import type { PackageName } from "@/project/project-types";
 import { getProjectInfoByName } from "@/project/getProjectInfoByName";
-import { getPackageInfo } from "@/project/getPackageProjectInfo";
+import {
+  getPackageInfo,
+  readPackageInfo,
+} from "@/project/getPackageProjectInfo";
+import { getGitRootFolder } from "@/path/getGitRootFolder";
 import { getWorkspaceProjectInfo } from "@/project/getWorkspaceProjectInfo";
 import type { GetWorkspaceFolderOptions, PickPathAlias } from "@/path";
 import type { RequireExactlyOne } from "@/types/type-utils";
@@ -27,7 +31,7 @@ export function getProjectInfo(
   }
 
   if (folder === "<gitroot_folder>") {
-    return getPackageInfo(options);
+    return readPackageInfo({ packageDir: getGitRootFolder(options) });
   }
 
   return getProjectInfoByName(folder.packageName, options);
@@ -69,7 +73,3 @@ function parseWorkspaceFolderTypeOptions(
 
   return { ...defaultOptions, ...option["<workspace_folder>"] };
 }
-
-getProjectInfo({
-  "<workspace_folder>": {},
-});

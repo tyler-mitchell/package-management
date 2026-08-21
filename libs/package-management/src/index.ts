@@ -6,4 +6,5 @@ export * from "./isPackageDependency";
 export * from "./path";
 export * from "./workspace";
 export * from "./project";
-export * from "./fs";
+export * from "./json";
+export * from "./storage";

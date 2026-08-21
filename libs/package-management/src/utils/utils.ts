@@ -5,6 +5,10 @@ import type {
   EntryOf,
   FromEntries,
   __,
+  CheckResult,
+  RequireExactlyOne,
+  Prettify,
+  SingleProp,
 } from "@/types";
 import { normalize as crossEnvPathNormalizer } from "pathe";
 import { promises as fs } from "node:fs";
@@ -27,7 +31,7 @@ export const notFalsy = <T>(value: T | null | undefined | false): value is T =>
 export const select = <
   T extends object,
   TSelection extends SelectionMap<T>,
-  TMode extends "pick" | "omit" = "pick",
+  TMode extends "true:pick" | "true:omit" = "true:pick",
 >(
   obj: T,
   selection?: TSelection,
@@ -36,7 +40,7 @@ export const select = <
   if (!selection) return obj;
 
   const filtered = entriesOf(obj).filter(([key]) => {
-    return mode === "omit" ? !selection[key] : selection[key];
+    return mode === "true:omit" ? !selection[key] : selection[key];
   });
   return fromEntries(filtered) as never;
 };
@@ -102,11 +106,64 @@ export function getArrayItemAtOffset<T>(
   index?: number,
   offset: number = 0
 ) {
-  if (!index || !arr) return undefined;
+  // `index` is a position, so `0` is valid and must not be treated as absent.
+  if (arr === undefined || index === undefined) return undefined;
   return arr[index + offset];
 }
 
 export function isMatching(a: string | undefined, b: string | undefined) {
   if (!a || !b) return false;
   return a === b;
+}
+
+export function checkResult<
+  $data,
+  $error = Error,
+  $data_key extends string = "data",
+  $error_key extends string = "error",
+>(
+  cb: () => $data,
+  options?: {
+    keys?: {
+      data?: $data_key;
+      error?: $error_key;
+    };
+  }
+): CheckResult<$data, $error, $data_key, $error_key> {
+  try {
+    return buildSingleProp({
+      key: options?.keys?.data ?? "data",
+      value: cb(),
+    }) as any;
+  } catch (error) {
+    return buildSingleProp({
+      key: options?.keys?.error ?? "error",
+      value: error,
+    }) as any;
+  }
+}
+
+function isPropertyKey(input: unknown): input is PropertyKey {
+  return (
+    typeof input === "string" ||
+    typeof input === "number" ||
+    typeof input === "symbol"
+  );
+}
+
+export function buildSingleProp<$key extends PropertyKey, $value>(
+  entry:
+    | {
+        key: $key;
+        value: $value;
+      }
+    | [key: $key, value: $value]
+): SingleProp<$key, $value> {
+  const [key, value] = Array.isArray(entry) ? entry : [entry.key, entry.value];
+
+  if (!isPropertyKey(key)) {
+    return {} as SingleProp<$key, $value>;
+  }
+
+  return { [key]: value } as SingleProp<$key, $value>;
 }

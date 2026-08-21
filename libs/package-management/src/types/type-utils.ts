@@ -1,5 +1,14 @@
 import type { AsyncCacheFn as _AsyncCacheFn } from "async-cache-fn";
+import type { Split } from "string-ts";
+
+export type Equals<A1 extends any, A2 extends any> =
+  (<A>() => A extends A2 ? 1 : 0) extends <A>() => A extends A1 ? 1 : 0 ? 1 : 0;
+
+export type Cast<A1 extends any, A2 extends any> = A1 extends A2 ? A1 : A2;
+
 export type __<T> = { [K in keyof T]: T[K] } & {};
+
+export type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
 export type ValueOf<T> = T[keyof T];
 
@@ -9,7 +18,13 @@ export type EnumToLiteral<T extends string | number> = T extends string
     ? N
     : never;
 
-export type Func = (...args: any[]) => any;
+export type IsUnknown<t> = unknown extends t
+  ? [t] extends [{}]
+    ? false
+    : true
+  : false;
+
+export type AnyFunction = (...args: any[]) => any;
 
 export type StringLiteral<T extends string> = T | (string & {});
 
@@ -19,7 +34,19 @@ export type ResolvedPromise<T> = T extends Promise<infer U> ? U : never;
 
 export type KeyOf<T, K> = K extends keyof T ? K : never;
 
-export type KeyOfValue<T, K> = T[KeyOf<T, K>];
+export type ValueKeyOf<T, K> = T[KeyOf<T, K>];
+
+export type ValueAtPath<T, $dot_path extends string> = ValueKeyOfDeep<
+  Extract<T, object>,
+  Split<$dot_path, ".">
+>;
+
+export type ValueKeyOfDeep<T, $path extends PropertyKey[]> = $path extends [
+  infer K,
+  ...infer $Path,
+]
+  ? ValueKeyOfDeep<ValueKeyOf<T, K>, Extract<$Path, PropertyKey[]>>
+  : T;
 
 export type PickKeyOf<T, K extends keyof T> = K extends keyof T ? K : never;
 
@@ -47,6 +74,8 @@ export type FromEntries<entries extends readonly Entry[]> = {
   [entry in entries[number] as entry[0]]: entry[1];
 };
 
+export type IsExactBoolean<T> = Equals<T, boolean> extends 1 ? true : false;
+
 type UnionizedSelectionMap<T, TSelection extends SelectionMap<T>, V> = __<
   V & {
     [K in keyof T as IsExactBoolean<TSelection[K]> extends true
@@ -58,22 +87,16 @@ type UnionizedSelectionMap<T, TSelection extends SelectionMap<T>, V> = __<
 export type Select<
   T,
   TSelection extends SelectionMap<T>,
-  TMode extends "pick" | "omit",
+  TMode extends "true:pick" | "true:omit",
 > = __<
   UnionizedSelectionMap<
     T,
     TSelection,
-    TMode extends "pick"
+    TMode extends "true:pick"
       ? Pick<T, KeyOf<T, keyof PickByValue<TSelection, true>>>
       : Omit<T, KeyOf<T, keyof PickByValue<TSelection, true>>>
   >
 >;
-
-export type IsExactBoolean<T> = true extends T
-  ? false extends T
-    ? true
-    : false
-  : false;
 
 export type IsUnion<T, U = T> = T extends U
   ? [U] extends [T]
@@ -111,3 +134,7 @@ export type OmitByValue<T, V> = OmitNever<{
 }>;
 
 export type NoInfer<T> = [T][T extends any ? 0 : never];
+
+export type SingleProp<$key, $value> = Prettify<
+  FromEntries<[[key: $key & PropertyKey, value: $value]]>
+>;

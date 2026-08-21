@@ -1,1 +1,1 @@
-export * from "./jsonc";
+export * from "./json";

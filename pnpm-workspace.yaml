@@ -1,2 +1,5 @@
 packages:
   - "libs/*"
+
+allowBuilds:
+  esbuild: true

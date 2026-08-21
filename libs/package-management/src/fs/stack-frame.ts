@@ -2,6 +2,7 @@ import ErrorStackParser, { type StackFrame } from "error-stack-parser";
 import { basename, dirname, normalize, relative } from "pathe";
 import process from "node:process";
 import { win32, posix } from "node:path";
+import { fileURLToPath } from "node:url";
 import { getArrayItemAtOffset, isMatching } from "@/utils";
 
 export interface StackFrameOptions {
@@ -116,7 +117,7 @@ function getFilePathData({
   cwd?: string;
 }) {
   const workingDir = cwd ?? process.cwd();
-  const filePath = normalize(filepath);
+  const filePath = normalize(toFilePath(filepath));
   const fileBasename = basename(filePath);
   const dirPath = dirname(filePath);
   const dirBasename = basename(dirPath);
@@ -135,6 +136,19 @@ function getFilePathData({
   };
 }
 
+/**
+ * V8 reports `StackFrame.fileName` as a `file://` URL for ES modules and as a
+ * plain filesystem path for CommonJS. Every path consumer downstream expects a
+ * filesystem path, so the URL form is converted at this boundary.
+ *
+ * Leaving it unconverted silently yields URL-shaped strings — `pathe.normalize`
+ * collapses `file:///a/b` to `file:/a/b` — which then flow into `path.join`
+ * and produce paths that are wrong rather than absent.
+ */
+function toFilePath(fileName: string) {
+  return fileName.startsWith("file:") ? fileURLToPath(fileName) : fileName;
+}
+
 function parseFunctionName(functionName: string | undefined) {
   if (!functionName) return undefined;
   // Example: "Module.functionName" => "functionName"
@@ -146,7 +160,7 @@ function removeStart(input: string, value: string) {
 }
 
 function placeFormatter(index?: number, total?: number) {
-  if (!index || !total) return undefined;
+  if (index === undefined || !total) return undefined;
   return [index, total].join("/");
 }
 

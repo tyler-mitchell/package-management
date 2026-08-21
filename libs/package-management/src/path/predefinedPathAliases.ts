@@ -25,7 +25,7 @@ export const predefinedPathAliases = {
     ],
   },
   "<workspace_folder?>": {
-    resolve: (opts) => getWorkspaceFolder(opts),
+    resolve: (opts) => getWorkspaceFolder({ ...opts, fallbackToGitRoot: false }),
     subpaths: [
       {
         to: "node_modules",
@@ -50,7 +50,7 @@ export const predefinedPathAliases = {
     ],
   },
   "<gitroot_folder>": {
-    resolve: (opts) => getGitRootFolder(opts)!,
+    resolve: (opts) => getGitRootFolder(opts),
     subpaths: [
       {
         to: "node_modules",

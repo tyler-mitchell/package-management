@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { workspace } from "../workspace";
 
-const ROOT_PACKAGE_NAME = "monorepo";
+const ROOT_PACKAGE_NAME = "@package-management/monorepo";
 
 const CURRENT_PACKAGE_NAME = "package-management";
 
@@ -27,7 +27,7 @@ describe("workspace-tools", () => {
   it("get the list of packages that are apart of the workspace", () => {
     const withRoot = workspace.packageList({ includeRoot: true });
 
-    expect(withRoot.some((e) => e.name === CURRENT_PACKAGE_NAME));
+    expect(withRoot.some((e) => e.name === CURRENT_PACKAGE_NAME)).toBe(true);
 
     expect(withRoot[0]?.name).toBe(ROOT_PACKAGE_NAME);
 
