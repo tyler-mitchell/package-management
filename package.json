@@ -21,9 +21,11 @@
     "release:check": "bumpy check --strict",
     "release:merge": "gh pr merge bumpy/version-packages --squash",
     "release:pr": "gh pr view bumpy/version-packages",
-    "release:registry-version": "npx --yes npm@11.19.0 view package-management version",
+    "release:registry-version": "npm view package-management version",
     "release:status": "bumpy status --json",
-    "release:trust": "npx --yes npm@11.19.0 login && npx --yes npm@11.19.0 trust github package-management --file release.yml --repository tyler-mitchell/package-management --allow-publish --yes",
+    "release:preflight": "node scripts/validate-package-contract.ts",
+    "release:trust": "node scripts/trust-package.ts",
+    "release:verify": "node scripts/verify-release.ts",
     "setup:github": "gh api --method PUT repos/{owner}/{repo}/actions/permissions/workflow -f default_workflow_permissions=read -F can_approve_pull_request_reviews=true",
     "workflow:check": "go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12 .github/workflows/*.yml"
   },
@@ -32,6 +34,7 @@
     "@gitdrops/eslint": "^0.0.2",
     "@types/node": "^20.5.1",
     "@varlock/bumpy": "1.18.1",
+    "npm": "^11.15.0",
     "eslint": "^8.56.0",
     "prettier": "^3.2.4",
     "typescript": "^5.3.2"
