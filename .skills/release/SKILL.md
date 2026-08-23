@@ -7,7 +7,8 @@ description: Record and release package changes through the repository's local B
 
 For a consumer-visible package change, follow
 `node_modules/@varlock/bumpy/skills/add-change/SKILL.md` and commit its bump file
-with the implementation.
+with the implementation on a feature branch. Open an ordinary pull request;
+never push release-bearing work directly to `main`.
 
 An explicit release request authorizes one command after GitHub reports the
 generated `bumpy/version-packages` pull request is green:
