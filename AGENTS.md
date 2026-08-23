@@ -61,3 +61,7 @@ release workflows, poll CI, or read successful-job logs.
 After publication, synchronize `main` forward from `release` only when the
 worktree is clean and no parallel agent has uncommitted work. Never rebase or
 force-push shared commits, and never switch branches to synchronize.
+
+Complete that synchronization before the next daily change and confirm Bumpy's
+consumed bump files are absent. Address review findings in code; resolve the
+thread only after the correction makes it outdated.
