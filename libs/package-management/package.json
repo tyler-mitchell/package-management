@@ -2,7 +2,7 @@
   "name": "package-management",
   "description": "Simple type-safe utilities for programmatically installing and importing packages",
   "keywords": ["package-manager"],
-  "version": "0.0.12",
+  "version": "0.0.13",
   "type": "module",
   "private": false,
   "repository": {
