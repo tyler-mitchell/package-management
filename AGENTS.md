@@ -1,10 +1,9 @@
 # Agent Workflow
 
-## Shared branches
+## Shared branch
 
-- Working branch: `main`
-- Integration branch: `release`
-- Bumpy release branch: `bumpy/version-packages`
+- Daily and Bumpy base branch: `main`
+- Generated version PR: `bumpy/version-packages`
 
 The human owns the checked-out branch. Agents never create, switch, rename, delete,
 reset, or replace branches unless the human explicitly requests that exact
@@ -16,40 +15,43 @@ difference; never “correct” it by switching.
 - Work and commit on the currently checked-out branch.
 - Stage only files owned by the current task; preserve parallel agents’ changes.
 - Inspect the index before committing. When another agent already staged files,
-  commit only task-owned paths and leave those staged entries untouched.
+  use `git commit --only -- <task-owned paths>` and leave those staged entries
+  untouched.
 - If Git reports `index.lock`, wait for the other Git operation; never delete it.
 - A request to `commit` authorizes a local commit only.
 - A request to `push` authorizes pushing the currently checked-out branch and
-  integrating its complete unpushed commit set through the shared PR.
+  its complete unpushed commit set.
 - Consumer-visible package changes include one maintained Bumpy bump file.
 - Follow `node_modules/@varlock/bumpy/skills/add-change/SKILL.md` for bump level
   and changelog text.
 - Do not create task-specific branches or worktrees.
 
-Before pushing, report every commit not yet on `origin/main`. Pushes to
-`main` create or update its single ordinary pull request into `release` and
-queue auto-merge after required checks. They run project CI and `bumpy ci check`;
-merging integrates changes without publishing.
+Before pushing `main`, report every commit not yet on `origin/main`. Each push
+makes Bumpy create or update `bumpy/version-packages`; it does not publish.
+
+If the push is rejected because the remote advanced, never force-push or rebase.
+When the worktree is clean and no parallel agent has uncommitted work, merge
+`origin/main` into the checked-out `main`, then push once.
 
 ## Release
 
-Only an explicit `release` request authorizes release integration.
+Only an explicit `release` request authorizes merging the version PR.
 
-1. If intended commits remain local, perform the normal push/integration flow.
-2. After GitHub reports that integration complete, Bumpy creates or updates
-   `bumpy/version-packages`.
-3. Run `pnpm run release:merge` to queue the Bumpy PR for auto-merge.
+1. If intended commits remain local, perform the normal push flow.
+2. Run `pnpm run release:pr` once. If the PR is absent, return to useful work;
+   GitHub owns the pending workflow.
+3. When the PR exists, run
+   `pnpm run release:merge` to queue it for auto-merge.
 4. Return to useful work. GitHub owns publication and public verification.
 
-If either PR is behind `release`, update that PR branch once and let required
-checks rerun. Never loop over status checks.
+If the version PR is behind `main`, run `pnpm run release:update` once and let
+required checks rerun. Never loop over status checks.
 
 Never version packages, edit generated changelogs, publish locally, dispatch
-release workflows, poll CI, or read successful-job logs.
+release workflows, poll CI, read successful-job logs, or merge with `--admin`.
 
 ## Synchronization
 
-Keep `main` long-lived. Synchronize it forward from `release` only when the
-worktree is clean and no parallel agent has uncommitted work. Fast-forward when
-possible; otherwise merge `origin/release` into `main`. Never rebase or
+Synchronize `main` from `origin/main` only when the worktree is clean and no
+parallel agent has uncommitted work. Fast-forward only. Never rebase or
 force-push shared commits, and never switch branches to synchronize.
