@@ -24,7 +24,6 @@
     "release:registry-version": "npm view package-management version",
     "release:status": "bumpy status --json",
     "release:preflight": "node scripts/verify-package.ts",
-    "release:trust": "node scripts/trust-package.ts",
     "release:verify": "node scripts/verify-release.ts",
     "setup:github": "node scripts/configure-github.ts",
     "workflow:check": "go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12 .github/workflows/*.yml"
