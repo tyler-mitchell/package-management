@@ -48,7 +48,7 @@ If the version PR is behind `main`, run `pnpm run release:update` once and let
 required checks rerun. Never loop over status checks.
 
 Never version packages, edit generated changelogs, publish locally, dispatch
-release workflows, poll CI, read successful-job logs, or merge with `--admin`.
+release workflows, poll CI, or read successful-job logs.
 
 ## Synchronization
 
