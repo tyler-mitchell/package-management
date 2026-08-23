@@ -7,6 +7,8 @@
   "packageManager": "pnpm@11.22.0",
   "scripts": {
     "check": "pnpm --filter package-management run check",
+    "ci:list": "gh run list --limit 10",
+    "ci:watch": "gh run watch --exit-status",
     "dev": "pnpm --filter=gitdrops run dev",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --fix",
