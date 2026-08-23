@@ -7,6 +7,9 @@ import { promisify } from "node:util";
 
 const run = promisify(execFile);
 const workspace = fileURLToPath(new URL("..", import.meta.url));
+const root = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8")) as {
+  devDependencies?: { npm?: string };
+};
 const manifest = JSON.parse(
   await readFile(new URL("../libs/package-management/package.json", import.meta.url), "utf8"),
 ) as {
@@ -17,6 +20,7 @@ const manifest = JSON.parse(
 const repository =
   typeof manifest.repository === "string" ? manifest.repository : manifest.repository?.url;
 
+if (!root.devDependencies?.npm) throw new Error("A locked npm 11.15+ tool dependency is required.");
 if (manifest.name !== "package-management") throw new Error("Package name does not match setup.");
 if (!repository?.includes("tyler-mitchell/package-management")) {
   throw new Error("repository.url does not match setup.");
