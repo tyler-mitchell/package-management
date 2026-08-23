@@ -7,7 +7,7 @@
   "packageManager": "pnpm@11.22.0",
   "scripts": {
     "check": "pnpm --filter package-management run check",
-    "ci:dispatch": "gh workflow run ci.yml --ref",
+    "ci:dispatch": "gh workflow run ci.yml",
     "ci:list": "gh run list --limit 10",
     "ci:logs": "gh run view --log-failed",
     "ci:rerun": "gh run rerun",
