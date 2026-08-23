@@ -4,6 +4,12 @@
 
 
 
+
+## 0.0.15
+<sub>2026-08-23</sub>
+
+- [#12](https://github.com/tyler-mitchell/package-management/pull/12)  *(patch)* - Added package installation and package-manager detection examples.
+
 ## 0.0.14
 <sub>2026-08-23</sub>
 
