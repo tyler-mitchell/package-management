@@ -1,7 +1,6 @@
 {
   "$schema": "../node_modules/@varlock/bumpy/config-schema.json",
   "baseBranch": "release",
-  "changelog": ["github", { "internalAuthors": ["tyler-mitchell"] }],
   "changedFilePatterns": [
     "src/**",
     "README.md",
