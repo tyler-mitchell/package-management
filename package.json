@@ -7,6 +7,7 @@
   "packageManager": "pnpm@11.22.0",
   "scripts": {
     "check": "pnpm --filter package-management run check",
+    "ci:dispatch": "gh workflow run ci.yml --ref",
     "ci:list": "gh run list --limit 10",
     "ci:logs": "gh run view --log-failed",
     "ci:rerun": "gh run rerun",
@@ -17,7 +18,8 @@
     "patch": "npx pnpm-patch-i",
     "release": "bumpy",
     "release:trust": "npm trust",
-    "setup:github": "gh api --method PUT repos/{owner}/{repo}/actions/permissions/workflow -f default_workflow_permissions=read -F can_approve_pull_request_reviews=true"
+    "setup:github": "gh api --method PUT repos/{owner}/{repo}/actions/permissions/workflow -f default_workflow_permissions=read -F can_approve_pull_request_reviews=true",
+    "workflow:check": "go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12 .github/workflows/*.yml"
   },
   "devDependencies": {
     "@antfu/eslint-config": "2.6.3",
