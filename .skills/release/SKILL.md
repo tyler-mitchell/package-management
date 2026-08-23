@@ -9,9 +9,9 @@ The root `AGENTS.md` owns branch, commit, push, and synchronization behavior.
 
 For a consumer-visible package change, follow
 `node_modules/@varlock/bumpy/skills/add-change/SKILL.md` and commit its bump file
-with the implementation on `develop`. Pushes update the single `develop → main`
+with the implementation on `main`. Pushes update the single `main → release`
 pull request; never create task branches or push release-bearing work directly
-to `main`.
+to `release`.
 
 An explicit release request authorizes one command after Bumpy creates
 `bumpy/version-packages`:

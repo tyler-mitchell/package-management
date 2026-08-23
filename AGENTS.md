@@ -2,8 +2,8 @@
 
 ## Shared branches
 
-- Working branch: `develop`
-- Integration branch: `main`
+- Working branch: `main`
+- Integration branch: `release`
 - Bumpy release branch: `bumpy/version-packages`
 
 The human owns the checked-out branch. Agents never create, switch, rename, delete,
@@ -26,8 +26,8 @@ difference; never “correct” it by switching.
   and changelog text.
 - Do not create task-specific branches or worktrees.
 
-Before pushing, report every commit not yet on `origin/develop`. Pushes to
-`develop` create or update its single ordinary pull request into `main` and
+Before pushing, report every commit not yet on `origin/main`. Pushes to
+`main` create or update its single ordinary pull request into `release` and
 queue auto-merge after required checks. They run project CI and `bumpy ci check`;
 merging integrates changes without publishing.
 
@@ -41,7 +41,7 @@ Only an explicit `release` request authorizes release integration.
 3. Run `pnpm run release:merge` to queue the Bumpy PR for auto-merge.
 4. Return to useful work. GitHub owns publication and public verification.
 
-If either PR is behind `main`, update that PR branch once and let required
+If either PR is behind `release`, update that PR branch once and let required
 checks rerun. Never loop over status checks.
 
 Never version packages, edit generated changelogs, publish locally, dispatch
@@ -49,7 +49,7 @@ release workflows, poll CI, or read successful-job logs.
 
 ## Synchronization
 
-Keep `develop` long-lived. Synchronize it forward from `main` only when the
+Keep `main` long-lived. Synchronize it forward from `release` only when the
 worktree is clean and no parallel agent has uncommitted work. Fast-forward when
-possible; otherwise merge `origin/main` into `develop`. Never rebase or
+possible; otherwise merge `origin/release` into `main`. Never rebase or
 force-push shared commits, and never switch branches to synchronize.
