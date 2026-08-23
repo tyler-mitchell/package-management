@@ -19,7 +19,7 @@
     "patch": "npx pnpm-patch-i",
     "release:add": "bumpy add",
     "release:check": "bumpy check --strict",
-    "release:merge": "gh pr merge bumpy/version-packages --squash",
+    "release:merge": "gh pr merge bumpy/version-packages --auto --squash",
     "release:pr": "gh pr view bumpy/version-packages",
     "release:registry-version": "npm view package-management version",
     "release:status": "bumpy status --json",
