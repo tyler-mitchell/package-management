@@ -5,6 +5,8 @@ description: Record and release package changes through the repository's local B
 
 # Release packages
 
+The root `AGENTS.md` owns branch, commit, push, and synchronization behavior.
+
 For a consumer-visible package change, follow
 `node_modules/@varlock/bumpy/skills/add-change/SKILL.md` and commit its bump file
 with the implementation on a feature branch. Open an ordinary pull request;
