@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  shared:
+    uses: tyler-mitchell/product-playbook/.github/workflows/pnpm-ci.yml@cdea098b0787aab0f0a471a247fe7bf65e814187
+    with:
+      node-versions: '["24", "26"]'
+      operating-systems: '["ubuntu-latest"]'

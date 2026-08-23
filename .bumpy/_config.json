@@ -1,0 +1,17 @@
+{
+  "$schema": "../node_modules/@varlock/bumpy/config-schema.json",
+  "baseBranch": "main",
+  "changelog": ["github", { "internalAuthors": ["tyler-mitchell"] }],
+  "changedFilePatterns": [
+    "src/**",
+    "README.md",
+    "package.json",
+    "build.config.ts",
+    "tsconfig.json",
+    "vitest.config.ts"
+  ],
+  "updateInternalDependencies": "patch",
+  "publish": {
+    "provenance": true
+  }
+}

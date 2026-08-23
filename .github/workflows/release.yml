@@ -1,0 +1,18 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  shared:
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+    uses: tyler-mitchell/product-playbook/.github/workflows/pnpm-bumpy-release.yml@cdea098b0787aab0f0a471a247fe7bf65e814187
+    with:
+      packages: '[{"path":"libs/package-management","probe":"scripts/verify-published.mjs"}]'

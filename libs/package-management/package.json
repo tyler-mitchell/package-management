@@ -17,6 +17,7 @@
   "scripts": {
     "build": "unbuild",
     "build:watch": "tsc --watch --preserveWatchOutput",
+    "check": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build",
     "dev": "unbuild --stub",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
@@ -25,8 +26,7 @@
     "test:snapshot": "vitest -u --fileParallelism=false",
     "test:silent": "vitest --reporter=dot",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf .tsbuildinfo .turbo coverage dist node_modules",
-    "npm-publish": "pnpm run build && npm publish  --access public --no-git-checks"
+    "clean": "rm -rf .tsbuildinfo .turbo coverage dist node_modules"
   },
   "devDependencies": {
     "@types/node": "26.2.0",
