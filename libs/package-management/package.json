@@ -26,6 +26,7 @@
     "dev": "unbuild --stub",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
+    "prepack": "pnpm run build",
     "test": "vitest --fileParallelism=false",
     "test:bench": "vitest bench",
     "test:snapshot": "vitest -u --fileParallelism=false",

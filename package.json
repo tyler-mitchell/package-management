@@ -8,6 +8,7 @@
   "scripts": {
     "check": "pnpm --filter package-management run check",
     "ci:dispatch": "gh workflow run ci.yml",
+    "ci:cancel": "gh run cancel",
     "ci:list": "gh run list --limit 10",
     "ci:logs": "gh run view --log-failed",
     "ci:rerun": "gh run rerun",
