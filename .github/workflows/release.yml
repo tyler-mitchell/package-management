@@ -13,6 +13,6 @@ jobs:
       contents: write
       id-token: write
       pull-requests: write
-    uses: tyler-mitchell/product-playbook/.github/workflows/pnpm-bumpy-release.yml@cdea098b0787aab0f0a471a247fe7bf65e814187
+    uses: tyler-mitchell/product-playbook/.github/workflows/pnpm-bumpy-release.yml@1cd007ad309a8f5aef35e620eab8b8132575f4f7
     with:
       packages: '[{"path":"libs/package-management","probe":"scripts/verify-published.mjs"}]'
