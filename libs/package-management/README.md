@@ -1,6 +1,7 @@
 # package-management
 
 Type-safe utilities for detecting and operating JavaScript package managers.
+Supports npm, pnpm, Yarn, and Bun projects.
 
 ## Install
 
