@@ -17,7 +17,7 @@
   "scripts": {
     "build": "unbuild",
     "build:watch": "tsc --watch --preserveWatchOutput",
-    "check": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build",
+    "check": "pnpm run lint && pnpm run typecheck && pnpm run build && pnpm run test",
     "dev": "unbuild --stub",
     "lint": "eslint",
     "lint:fix": "eslint --fix",

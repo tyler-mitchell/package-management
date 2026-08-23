@@ -2,7 +2,6 @@ import { afterAll, describe, expect, it } from "vitest";
 import { modifyJSON, modifyJSONFile } from "./json";
 import { getPath } from "@/path";
 import { defineFileSystemStorage } from "@/storage";
-import { before } from "node:test";
 
 const fixturesDir = getPath(["<package_folder>/src", "json/fixtures"]);
 
@@ -30,7 +29,7 @@ describe("json", () => {
     await fixtureFs.deleteFileSystem();
   });
 
-  it.only("should modify json data", () => {
+  it("should modify json data", () => {
     const { data: simpleJson } = modifyJSON({
       defaultEditOptions: {},
       json: {
