@@ -3,6 +3,12 @@
 
 
 
+
+## 0.0.14
+<sub>2026-08-23</sub>
+
+-  *(patch)* - Added the package-management keyword for registry discovery.
+
 ## 0.0.13
 <sub>2026-08-23</sub>
 
