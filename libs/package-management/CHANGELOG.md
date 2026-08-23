@@ -2,6 +2,12 @@
 
 
 
+
+## 0.0.13
+<sub>2026-08-23</sub>
+
+-  *(patch)* - Fixed the package description spelling.
+
 ## 0.0.12
 <sub>2026-08-23</sub>
 
