@@ -1,5 +1,11 @@
 # Changelog
 
+
+## 0.0.16
+<sub>2026-08-23</sub>
+
+- *(patch)* Documented support for npm, pnpm, Yarn, and Bun projects.
+
 ## 0.0.15
 
 _2026-08-23_
