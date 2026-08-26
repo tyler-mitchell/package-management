@@ -115,6 +115,24 @@ describe("alias resolution — failure reporting", () => {
     );
   });
 
+  it("resolves a glob to a matching path", () => {
+    expect(
+      getPath({ to: ["<package_folder>", "package.json"], glob: true })
+    ).toBe(getPath({ to: ["<package_folder>", "package.json"] }));
+  });
+
+  it("reports an unmatched glob as undefined", () => {
+    expect(
+      getPath({ to: ["<package_folder>", "*.definitely-not-here"], glob: true })
+    ).toBeUndefined();
+  });
+
+  it("resolves an existing path when asked to validate", () => {
+    expect(
+      getPath({ to: ["<package_folder>", "package.json"], checkExistence: true })
+    ).toContain("package.json");
+  });
+
   it("reports a missing path as undefined only when asked to validate", () => {
     expect(
       getPath({

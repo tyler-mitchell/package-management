@@ -3,6 +3,7 @@ import { workspace } from "../workspace";
 import { isPackageDependency } from "@/isPackageDependency";
 import { isPackageNameInWorkspace } from "@/workspace/isPackageNameInWorkspace";
 import { getFolderByPackageName } from "@/path/getFolderByPackageName";
+import { getPackageInfoListAsync } from "@/workspace/getWorkspacePackageInfoList";
 
 const ROOT_PACKAGE_NAME = "@package-management/monorepo";
 
@@ -53,6 +54,19 @@ describe("workspace-tools", () => {
     expect(CURRENT_PACKAGE_NAME in withoutRoot).toBe(true);
 
     expect(ROOT_PACKAGE_NAME in withoutRoot).toBe(false);
+  });
+
+  it("lists workspace packages asynchronously in the same shape", async () => {
+    const list = await getPackageInfoListAsync({ includeRoot: true });
+
+    expect(list.map(({ name }) => name)).toContain(CURRENT_PACKAGE_NAME);
+
+    // Every entry carries a directory and a package.json path, regardless of
+    // whether it came from the workspace tool or from the root.
+    list.forEach((info) => {
+      expect(info.dirpath).toBeTruthy();
+      expect(info.path.endsWith("package.json")).toBe(true);
+    });
   });
 
   it("finds the workspace root package by name", () => {
