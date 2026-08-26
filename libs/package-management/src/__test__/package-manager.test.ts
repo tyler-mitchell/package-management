@@ -123,6 +123,24 @@ describe("package-manager", () => {
     await expect(absentPackageManager.matchesVersion()).resolves.toBe(true);
   });
 
+  it("refuses a package name the manager would read as a flag", async () => {
+    const packageManager = await findPackageManager();
+
+    // Names become argv entries verbatim, so forwarding one starting with `-`
+    // hands the caller control of the package manager's own options.
+    await expect(
+      packageManager.installPackage("--registry=http://example.invalid")
+    ).rejects.toThrow(/cannot be empty or begin with/);
+
+    await expect(packageManager.installPackage(["lodash-es", "-g"])).rejects.toThrow(
+      /cannot be empty or begin with/
+    );
+
+    await expect(packageManager.installPackage("")).rejects.toThrow(
+      /cannot be empty or begin with/
+    );
+  });
+
   it("maps over every configured package manager", async () => {
     const ids = await mapPackageManagers((packageManager) => packageManager.id);
 

@@ -159,26 +159,36 @@ function normalizePathTo(
 ) {
   const { cwd, aliasMap } = options ?? {};
 
-  const aliasedPath = Array.isArray(pathTo)
-    ? path.join(...pathTo.filter(isNotNull))
-    : pathTo;
-
   // The tuple form names its alias positionally; the string form carries the
   // alias as a prefix (`"<package_folder>/src"`), so it has to be recovered.
   const baseDir = Array.isArray(pathTo)
     ? pathTo[0]
-    : findAliasToken(aliasedPath, aliasMap);
+    : findAliasToken(pathTo, aliasMap);
 
-  // A bare string that matches no alias is a literal path, not a broken alias.
-  if (baseDir === undefined) return aliasedPath;
+  // Only the string form falls back: a bare string matching no alias is a
+  // literal path. The tuple form's first element is declared to be an alias,
+  // so an unknown one there is a caller error and must surface.
+  if (baseDir === undefined) return pathTo as string;
 
-  const baseDirPath = executeMapFn(aliasMap, baseDir, [{ cwd }]);
+  const baseDirPath = assertResolved(
+    baseDir,
+    executeMapFn(aliasMap, baseDir, [{ cwd }])
+  );
 
-  if (typeof baseDirPath !== "string" || baseDirPath.length === 0) {
-    throw new Error(`Path alias resolved to no location: ${baseDir}`);
+  // The alias is substituted before joining. Joining first lets a `..` segment
+  // cancel the token itself — `["<cwd>", ".."]` normalized to `"."` and then
+  // matched no alias, yielding a plausible but entirely wrong relative path.
+  return Array.isArray(pathTo)
+    ? path.join(baseDirPath, ...pathTo.slice(1).filter(isNotNull))
+    : resolveAlias(pathTo, { [baseDir]: baseDirPath });
+}
+
+function assertResolved(alias: string, resolved: unknown) {
+  if (typeof resolved !== "string" || resolved.length === 0) {
+    throw new Error(`Path alias resolved to no location: ${alias}`);
   }
 
-  return resolveAlias(aliasedPath, { [baseDir]: baseDirPath });
+  return resolved;
 }
 
 /**
@@ -225,7 +235,12 @@ export function getAliasMap<const T extends AliasDefinitionMap>(
           return [
             subpathAlias,
             (opts?: { cwd?: string }) =>
-              resolveAlias(subpathAlias, { [alias]: resolve(opts) }),
+              // The same assertion the bare alias gets. Without it an
+              // unresolvable parent produced `join(undefined, "/node_modules")`
+              // — a path at the filesystem root — instead of failing.
+              resolveAlias(subpathAlias, {
+                [alias]: assertResolved(alias, resolve(opts)),
+              }),
           ];
         }),
       ];

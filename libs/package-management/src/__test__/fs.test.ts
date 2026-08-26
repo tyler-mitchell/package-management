@@ -6,6 +6,7 @@ import { join } from "pathe";
 import { createFile } from "@/fs/createFile";
 import { isWritable } from "@/fs/isFileWritable";
 import { getFilenameFromPath } from "@/path/getFilenameFromPath";
+import { gitignore } from "@/gitignore";
 
 const scratchRoot = join(os.tmpdir(), `package-management-fs-${process.pid}`);
 
@@ -52,6 +53,27 @@ describe("isWritable", () => {
 
   it("reports a path that does not exist as not writable", () => {
     expect(isWritable(join(scratchRoot, "absent.txt"))).toBe(false);
+  });
+});
+
+describe("gitignore", () => {
+  it("reports an empty rule set when there is no .gitignore", () => {
+    // `project()` builds one of these for every project, so a project without
+    // a .gitignore threw ENOENT from a plain property read.
+    const absent = join(scratchRoot, "no-gitignore", ".gitignore");
+
+    expect(() => gitignore(absent).patterns).not.toThrow();
+    expect(gitignore(absent).patterns).toEqual([]);
+  });
+
+  it("parses the patterns of a file that exists", () => {
+    const target = join(scratchRoot, "with-gitignore", ".gitignore");
+
+    createFile(target, "node_modules\ndist\n");
+
+    expect(gitignore(target).patterns).toEqual(
+      expect.arrayContaining(["node_modules", "dist"])
+    );
   });
 });
 

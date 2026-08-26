@@ -1,11 +1,21 @@
 import { getPackageFolder } from "../path/getPackageFolder";
 import { readFileSync, statSync } from "node:fs";
 import path from "node:path";
+import process from "node:process";
 import type { PackageInfo, PackageJson } from "./project-types";
 import type { PathOptions } from "..";
 
 export function getPackageInfo(options?: PathOptions) {
   const packageDir = getPackageFolder(options);
+
+  // There is genuinely no package when nothing up-chain has a package.json.
+  // Previously this was asserted away and `undefined` flowed into `path.join`.
+  if (!packageDir) {
+    throw new Error(
+      `No package.json found searching up from "${options?.cwd ?? process.cwd()}"`
+    );
+  }
+
   return readPackageInfo({ packageDir });
 }
 

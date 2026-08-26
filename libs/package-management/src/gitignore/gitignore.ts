@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import gitignoreParser from "parse-gitignore";
 import type {
   GitignoreParseOptions,
@@ -10,19 +10,25 @@ export type {
   ParsedGitignoreObject,
 } from "parse-gitignore";
 
-function parseGitignoreFile(
-  gitignorePath: string,
+function parseGitignoreContent(
+  // The parser takes the file's contents, not its path — the previous name
+  // said otherwise and made the call site read as though it took a path.
+  gitignoreContent: string,
   options?: GitignoreParseOptions
 ): ParsedGitignoreObject {
-  return gitignoreParser(gitignorePath, options);
+  return gitignoreParser(gitignoreContent, options);
 }
 
-function getGitignoreData(gitignorePath: string) {
-  const gitignoreFileContent = readFileSync(gitignorePath, "utf-8");
+function getGitignoreData(
+  gitignorePath: string,
+  options?: GitignoreParseOptions
+) {
+  // A project without a .gitignore is ordinary, and `project()` builds one of
+  // these for every project — so a missing file is an empty rule set, not an
+  // ENOENT thrown from a property read.
+  if (!existsSync(gitignorePath)) return parseGitignoreContent("", options);
 
-  const gitignores = parseGitignoreFile(gitignoreFileContent);
-
-  return gitignores;
+  return parseGitignoreContent(readFileSync(gitignorePath, "utf-8"), options);
 }
 
 export const gitignore = (gitignorePath: string) => ({

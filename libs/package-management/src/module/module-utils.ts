@@ -7,7 +7,16 @@ export async function resolveModule<T>(
   module: Awaitable<T>
 ): Promise<T extends { default: infer U } ? U : T> {
   const resolved = await module;
-  return (resolved as any).default || resolved;
+
+  // Presence, not truthiness: `|| resolved` handed back the whole namespace for
+  // a module whose default export is `0`, `""` or `false`, and threw outright
+  // when the resolved value was null.
+  const hasDefault =
+    resolved !== null && typeof resolved === "object" && "default" in resolved;
+
+  return (
+    hasDefault ? (resolved as { default: unknown }).default : resolved
+  ) as T extends { default: infer U } ? U : T;
 }
 
 export interface ResolveModulePathOptions extends Omit<ResolveOptions, "url"> {

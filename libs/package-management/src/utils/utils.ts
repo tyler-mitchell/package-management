@@ -55,11 +55,15 @@ export function defaults<
 >(obj: T | undefined, defaults: D): __<T & NonNullable<D>> {
   // An explicit `undefined` means "not provided", so it must not overwrite the
   // default — the return type promises the default is always present.
-  const provided = entriesOf(obj ?? {}).filter(
+  const provided = Object.entries(obj ?? {}).filter(
     ([, value]) => value !== undefined
   );
 
-  return Object.assign({}, defaults, Object.fromEntries(provided));
+  return Object.assign(
+    {},
+    defaults,
+    Object.fromEntries(provided)
+  ) as __<T & NonNullable<D>>;
 }
 
 interface A {

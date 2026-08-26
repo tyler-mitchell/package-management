@@ -1,4 +1,4 @@
-import { findPackageManager, isPackageDependency } from "..";
+import { isPackageDependency } from "..";
 import { resolveModule } from "./module-utils";
 import type { __ } from "@/types";
 import type {
@@ -39,25 +39,39 @@ export interface ImporterOptions {
  *
  * @typeparam Imports An array type representing the dynamic imports.
  */
-export function importer<T extends ImportList>(
+export async function importer<T extends ImportList>(
   imports: [...T],
   options?: ImporterOptions
 ): Promise<ResolvedImportList<T>> {
   const { install: defaultInstall = true, installer } = options ?? {};
+
+  const resolved = imports.map((option) => resolveImportOption(option));
+
+  const missing = resolved.filter(
+    (option) =>
+      Boolean(option.name) &&
+      (option.install ?? defaultInstall) &&
+      !((option.checkExists ?? true) && isPackageDependency(option.name!))
+  );
+
+  // Installed in one batch per dependency kind, before any import runs.
+  // Installing per import concurrently spawns a package manager process per
+  // package against one node_modules, and their interleaved writes corrupt
+  // the manager's own metadata — the same hazard `uninstallPackage` avoids.
+  await installMissing(
+    missing.filter(({ dev }) => !dev).map(({ name }) => name!),
+    { dev: false },
+    installer
+  );
+
+  await installMissing(
+    missing.filter(({ dev }) => dev).map(({ name }) => name!),
+    { dev: true },
+    installer
+  );
+
   return Promise.all(
-    imports.map(async (e) => {
-      const importOpt = resolveImportOption(e);
-
-      const shouldInstall = importOpt.install ?? defaultInstall;
-
-      if (shouldInstall && importOpt.name) {
-        await installImport(importOpt.name, importOpt, installer);
-      }
-
-      const m = await importOpt.import();
-
-      return resolveModule(m);
-    })
+    resolved.map(async (option) => resolveModule(await option.import()))
   ) as Promise<ResolvedImportList<T>>;
 }
 
@@ -98,24 +112,17 @@ export type InstallerFn = (
   options?: { dev?: boolean; checkExists?: boolean }
 ) => Promise<void>;
 
-async function installImport(
-  packageName: string | string[],
-  options?: Parameters<InstallerFn>[1],
+async function installMissing(
+  packageNames: string[],
+  options: Parameters<InstallerFn>[1],
   installer?: InstallerFn
 ) {
-  if (!packageName) return;
-
-  // Default to skipping packages already declared as dependencies. Installing
-  // unconditionally spawns a package manager on every import, which is the
-  // dominant cost of resolving an import map that is already satisfied.
-  const { checkExists = true } = options ?? {};
-
-  if (checkExists && isPackageDependency(packageName)) return;
+  if (packageNames.length === 0) return;
 
   const installerFn =
     installer ??
     (await workspace.getProject("<package_folder>").findPackageManager())
       .installPackage;
 
-  await installerFn(packageName, options);
+  await installerFn(packageNames, options);
 }

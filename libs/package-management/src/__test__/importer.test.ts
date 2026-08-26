@@ -49,6 +49,62 @@ describe("importer", () => {
   });
 });
 
+describe("batched installation", () => {
+  it("installs every missing package in one call", async () => {
+    const calls: string[][] = [];
+
+    // One package manager process per package, run concurrently against a
+    // single node_modules, corrupts the manager's own metadata.
+    await importer(
+      [
+        { ...definePackage("vitest"), checkExists: false },
+        { ...definePackage("execa"), checkExists: false },
+      ],
+      {
+        installer: async (names) => {
+          calls.push([names].flat());
+        },
+      }
+    );
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toEqual(["vitest", "execa"]);
+  });
+
+  it("separates dev dependencies into their own batch", async () => {
+    const calls: { names: string[]; dev?: boolean }[] = [];
+
+    await importer(
+      [
+        { ...definePackage("vitest"), checkExists: false, dev: true },
+        { ...definePackage("execa"), checkExists: false },
+      ],
+      {
+        installer: async (names, options) => {
+          calls.push({ names: [names].flat(), dev: options?.dev });
+        },
+      }
+    );
+
+    expect(calls).toEqual([
+      { names: ["execa"], dev: false },
+      { names: ["vitest"], dev: true },
+    ]);
+  });
+
+  it("installs nothing when every package is already declared", async () => {
+    const calls: string[][] = [];
+
+    await importer([definePackage("vitest")], {
+      installer: async (names) => {
+        calls.push([names].flat());
+      },
+    });
+
+    expect(calls).toEqual([]);
+  });
+});
+
 describe("importMap", () => {
   it("resolves a record of imports under the same keys", async () => {
     const { first, second } = await importMap({

@@ -103,23 +103,23 @@ export function definePackageManager<ID extends string>(
   ) => {
     const install = agentArgs.install;
 
-    // @ts-expect-error
-    const { dev, preferOffline } = select(
-      install.options,
-      {
-        preferOffline: true,
-        cwd: defaultCwd,
-        ...options,
-      },
-      "true:pick"
-    );
+    const { dev = false, preferOffline = true } = options ?? {};
+
+    const flags = select(install.options, { dev, preferOffline }, "true:pick");
 
     const packageNames = toArray(packageName);
+
+    assertInstallableNames(packageNames);
 
     try {
       await $$({
         command,
-        args: [install.command, dev, preferOffline, ...packageNames],
+        args: [
+          install.command,
+          flags.dev,
+          flags.preferOffline,
+          ...packageNames,
+        ],
         cwd: defaultCwd,
         ...options,
       });
@@ -212,6 +212,25 @@ export function definePackageManager<ID extends string>(
       });
     },
   };
+}
+
+/**
+ * Package names become argv entries verbatim. A name starting with `-` is read
+ * by the package manager as a flag, so a caller passing along untrusted input
+ * could turn an install into `--registry=...` or similar. There is no shell
+ * involved, so this is argument injection rather than shell injection, but the
+ * name still has to be rejected rather than forwarded.
+ */
+function assertInstallableNames(packageNames: string[]) {
+  const rejected = packageNames.filter(
+    (name) => name.length === 0 || name.startsWith("-")
+  );
+
+  if (rejected.length > 0) {
+    throw new Error(
+      `Not a package name: ${rejected.map((name) => JSON.stringify(name)).join(", ")}. A package name cannot be empty or begin with "-".`
+    );
+  }
 }
 
 async function $$(options: {
