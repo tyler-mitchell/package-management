@@ -172,6 +172,20 @@ describe("alias resolution — failure reporting", () => {
     ).toContain("package.json");
   });
 
+  it("still surfaces an unresolvable alias while validating", () => {
+    // A caller mistake and a missing file are different problems; reporting
+    // the former as "no such path" sends the reader looking for a file.
+    expect(() =>
+      // @ts-expect-error — exercising the runtime guard behind the alias union.
+      getPath({ to: ["<not_an_alias>"], checkExistence: true })
+    ).toThrow(/resolved to no location/);
+
+    expect(() =>
+      // @ts-expect-error — exercising the runtime guard behind the alias union.
+      getPath({ to: ["<not_an_alias>"], glob: true })
+    ).toThrow(/resolved to no location/);
+  });
+
   it("reports a missing path as undefined only when asked to validate", () => {
     expect(
       getPath({

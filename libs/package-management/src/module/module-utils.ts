@@ -35,17 +35,10 @@ export function resolvePackageModulePath(
   name: string,
   options?: ResolveModulePathOptions
 ) {
-  const resolvedPath = findResolvedModulePath(
-    [`${name}/package.json`, name],
-    options
-  );
-
-  if (resolvedPath === undefined) {
-    console.error(`Could not resolve package ${name}`);
-    return undefined;
-  }
-
-  return resolvedPath;
+  // Returning undefined is this function's ordinary "not installed" answer,
+  // and `isPackageModuleFound` is a predicate built on it — logging here made
+  // every negative answer print an error the caller had already handled.
+  return findResolvedModulePath([`${name}/package.json`, name], options);
 }
 
 export function findResolvedModulePath(

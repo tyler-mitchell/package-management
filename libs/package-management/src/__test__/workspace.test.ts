@@ -4,6 +4,7 @@ import { isPackageDependency } from "@/isPackageDependency";
 import { isPackageNameInWorkspace } from "@/workspace/isPackageNameInWorkspace";
 import { getFolderByPackageName } from "@/path/getFolderByPackageName";
 import { getPackageInfoListAsync } from "@/workspace/getWorkspacePackageInfoList";
+import { join } from "pathe";
 
 const ROOT_PACKAGE_NAME = "@package-management/monorepo";
 
@@ -121,7 +122,18 @@ describe("workspace-tools", () => {
 
     const tsconfigPaths = project.tsconfig.paths;
 
-    expect(tsconfigPaths.includes("tsconfig.json")).toBe(true);
+    // Absolute, and under this project — a bare filename would not say which
+    // project the config belongs to.
+    expect(tsconfigPaths).toContain(
+      join(project.projectDir!, "tsconfig.json")
+    );
+  });
+
+  it("reports no tsconfigs for a project that could not be resolved", () => {
+    const unresolved = workspace.getProject({ packageName: "not-a-package" });
+
+    expect(unresolved.tsconfig.paths).toEqual([]);
+    expect(unresolved.gitignore.patterns).toEqual([]);
   });
 
   it("get the list of gitignore patterns from the workspace workspace folder", () => {

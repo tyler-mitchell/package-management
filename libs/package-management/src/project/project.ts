@@ -68,9 +68,13 @@ export const project = (...args: ProjectParams) => {
 
     mapPackageManagers,
 
-    tsconfig: tsconfig(projectDir ?? ""),
+    // Passed through as-is: substituting "" for an unresolved project made
+    // both of these read from the calling process's directory instead.
+    tsconfig: tsconfig(projectDir),
 
-    gitignore: gitignore(path.join(projectDir ?? "", ".gitignore")),
+    gitignore: gitignore(
+      projectDir ? path.join(projectDir, ".gitignore") : undefined
+    ),
 
     filterPackageManagers,
 

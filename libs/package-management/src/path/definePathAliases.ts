@@ -105,13 +105,16 @@ function getAliasedFilePath<
       ? resolveRelativePathTo(to, startingFrom, resolveOptions)
       : resolvePathTo(to, resolveOptions);
   } catch (error) {
-    // `checkExistence` and `glob` are the only modes whose return type admits
-    // `undefined`. Swallowing anything else reports a missing path as an empty
-    // result and hands callers a `string` that is not one.
-    if (checkExistence || glob) return undefined as never;
+    // Only a genuine miss becomes `undefined`. Catching everything here meant
+    // an unresolvable alias — a caller mistake — was reported as "no such
+    // path", which is a different problem with a different fix.
+    if (error instanceof PathNotFoundError) return undefined as never;
     throw error;
   }
 }
+
+/** A path that resolved correctly but names nothing on disk. */
+class PathNotFoundError extends Error {}
 
 function resolveRelativePathTo(
   to: PathTo,
@@ -139,13 +142,13 @@ function resolvePathTo(
   if (glob) {
     const globPaths = globbySync(normalized, { cwd });
     if (!globPaths[0])
-      throw new Error(`No paths found for glob: ${normalized}`);
+      throw new PathNotFoundError(`No paths found for glob: ${normalized}`);
 
     return globPaths[0];
   }
 
   if (!glob && checkExistence && !existsSync(normalized))
-    throw new Error(`Path does not exist: ${normalized}`);
+    throw new PathNotFoundError(`Path does not exist: ${normalized}`);
 
   return normalized;
 }

@@ -20,23 +20,28 @@ function parseGitignoreContent(
 }
 
 function getGitignoreData(
-  gitignorePath: string,
+  gitignorePath: string | undefined,
   options?: GitignoreParseOptions
 ) {
   // A project without a .gitignore is ordinary, and `project()` builds one of
   // these for every project — so a missing file is an empty rule set, not an
   // ENOENT thrown from a property read.
-  if (!existsSync(gitignorePath)) return parseGitignoreContent("", options);
+  if (!gitignorePath || !existsSync(gitignorePath)) {
+    return parseGitignoreContent("", options);
+  }
 
   return parseGitignoreContent(readFileSync(gitignorePath, "utf-8"), options);
 }
 
-export const gitignore = (gitignorePath: string) => ({
+export const gitignore = (
+  gitignorePath: string | undefined,
+  options?: GitignoreParseOptions
+) => ({
   get data() {
-    return getGitignoreData(gitignorePath);
+    return getGitignoreData(gitignorePath, options);
   },
 
   get patterns() {
-    return getGitignoreData(gitignorePath).patterns;
+    return getGitignoreData(gitignorePath, options).patterns;
   },
 });

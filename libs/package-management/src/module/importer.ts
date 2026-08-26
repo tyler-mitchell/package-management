@@ -1,4 +1,5 @@
 import { isPackageDependency } from "..";
+import { isPackageModuleFound } from "./module-utils";
 import { resolveModule } from "./module-utils";
 import type { __ } from "@/types";
 import type {
@@ -51,7 +52,7 @@ export async function importer<T extends ImportList>(
     (option) =>
       Boolean(option.name) &&
       (option.install ?? defaultInstall) &&
-      !((option.checkExists ?? true) && isPackageDependency(option.name!))
+      !((option.checkExists ?? true) && isSatisfied(option.name!))
   );
 
   // Installed in one batch per dependency kind, before any import runs.
@@ -111,6 +112,17 @@ export type InstallerFn = (
   packageName: string | string[],
   options?: { dev?: boolean; checkExists?: boolean }
 ) => Promise<void>;
+
+/**
+ * Whether a package is both declared and actually resolvable.
+ *
+ * Declaration alone is not enough: a fresh clone with no node_modules declares
+ * everything and resolves nothing, and skipping the install there fails at the
+ * import instead. Resolution alone is not enough either, since a hoisted
+ * transitive dependency resolves without being this package's to rely on.
+ */
+const isSatisfied = (packageName: string) =>
+  isPackageDependency(packageName) && isPackageModuleFound(packageName);
 
 async function installMissing(
   packageNames: string[],
