@@ -27,6 +27,13 @@ export interface JSONEditOptions extends ModificationOptions {
 
 export type JSONEdits = JSONEditMap | JSONEditData[];
 
+/**
+ * `jsonc-parser` addresses an array element by a numeric segment and throws
+ * when given the string form, so digit-only segments are coerced.
+ */
+const toPathSegment = (segment: string) =>
+  /^\d+$/.test(segment) ? Number(segment) : segment;
+
 function resolveEditPath(
   path: string | number | Array<string | number>,
   options?: {
@@ -34,29 +41,36 @@ function resolveEditPath(
   }
 ): (string | number)[] {
   const { pathSeparator = "." } = options || {};
-  const arr = toArray(path);
 
-  return arr
-    .map((path) => {
-      if (typeof path === "string") {
-        return pathSeparator === false ? path : path.split(pathSeparator);
-      }
-      return path;
-    })
-    .flat();
+  // An array is the caller spelling out the segments, so its elements are
+  // taken literally. Splitting them too makes any key containing the separator
+  // — `exports["./index.js"]`, `paths["foo.bar/*"]` — impossible to address.
+  if (Array.isArray(path)) return path;
+
+  if (typeof path === "number" || pathSeparator === false) return [path];
+
+  return path.split(pathSeparator).map(toPathSegment);
 }
 
-function parseJSONCEdits(edits: JSONEdits): JSONCEditDataResolved[] {
+function parseJSONCEdits(
+  edits: JSONEdits,
+  defaultEditOptions?: JSONEditOptions
+): JSONCEditDataResolved[] {
+  const resolve = (
+    path: JSONEditData["path"],
+    options?: JSONEditOptions
+  ) => resolveEditPath(path, { ...defaultEditOptions, ...options });
+
   if (Array.isArray(edits)) {
     return edits.map(({ path, ...edit }) => ({
-      path: resolveEditPath(path),
+      path: resolve(path, edit.options),
       ...edit,
     }));
   }
 
   return Object.entries(edits).map(
     ([path, value]): JSONCEditDataResolved => ({
-      path: resolveEditPath(path),
+      path: resolve(path, value.options),
       ...value,
     })
   );
@@ -78,16 +92,23 @@ export function modifyJSON({
   return checkResult(() => {
     const text = resolveJsonSource(json, "text");
 
-    const jsoncEdits = parseJSONCEdits(edits);
+    const jsoncEdits = parseJSONCEdits(edits, defaultEditOptions);
 
-    const editResult = jsoncEdits.flatMap((edit) =>
-      modify(text, edit.path, edit.value, {
-        ...defaultEditOptions,
-        ...edit.options,
-      })
+    // Applied one at a time, each against the result of the last. Computing
+    // every edit from the original text makes edits blind to each other: two
+    // that create the same missing parent each synthesize it, producing a
+    // duplicate key, and two touching the same key are rejected as overlapping.
+    const updated = jsoncEdits.reduce(
+      (current, edit) =>
+        applyEdits(
+          current,
+          modify(current, edit.path, edit.value, {
+            ...defaultEditOptions,
+            ...edit.options,
+          })
+        ),
+      text
     );
-
-    const updated = applyEdits(text, editResult);
 
     return resolveJsonSource({ text: updated });
   });

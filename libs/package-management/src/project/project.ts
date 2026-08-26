@@ -1,9 +1,6 @@
 import path from "pathe";
-import type { AnyFunction, PathOptions } from "@/types";
-import type { PackageName } from "./project-types";
-import { getProjectInfoByName } from "./getProjectInfoByName";
-import { getPackageInfo } from "./getPackageProjectInfo";
-import { getWorkspaceProjectInfo } from "./getWorkspaceProjectInfo";
+import type { PathOptions } from "@/types";
+import { readPackageInfo } from "./getPackageProjectInfo";
 import { tsconfig } from "@/tsconfig/tsconfig";
 import { gitignore } from "@/gitignore";
 import {
@@ -12,7 +9,6 @@ import {
   findDependencyInPackageJson,
 } from "./findDependencyInPackageJson";
 import { getProjectInfo, type ProjectFolderTypeOption } from "./getProjectInfo";
-import { findPackageManager } from "..";
 import { definePackageManagerClient } from "@/package-manager/package-managers";
 
 export type ProjectParams = [
@@ -23,7 +19,12 @@ export type ProjectParams = [
 export const project = (...args: ProjectParams) => {
   const [source, projectOptions] = args;
 
-  const { packageJson, packageJsonPath, packageName, projectDir } = info();
+  const {
+    packageJson,
+    name: packageName,
+    dirpath: projectDir,
+    path: packageJsonPath,
+  } = getProjectInfo(source, projectOptions) ?? {};
 
   const {
     findPackageManager,
@@ -35,6 +36,16 @@ export const project = (...args: ProjectParams) => {
     filterPackageManagers,
     mapPackageManagers,
   } = definePackageManagerClient({ cwd: projectDir });
+
+  /**
+   * A project does not move, so its location is resolved once — but installs
+   * rewrite its package.json, so that is read through `readPackageInfo`, which
+   * re-parses only when the file has actually changed.
+   */
+  const getPackageJson = () =>
+    projectDir
+      ? readPackageInfo({ packageDir: projectDir }).packageJson
+      : packageJson;
 
   return {
     packageJson,
@@ -63,34 +74,14 @@ export const project = (...args: ProjectParams) => {
 
     filterPackageManagers,
 
-    getPackageJson: () => get("packageJson"),
+    getPackageJson,
 
     findDependencyInPackageJson: (
       options: string | FindDependencyInPackageJsonOptions
-    ) => findDependencyInPackageJson(options, get("packageJson")),
+    ) => findDependencyInPackageJson(options, getPackageJson()),
 
     isDependencyInPackageJson: (
       options: string | FindDependencyInPackageJsonOptions
-    ) => isDependencyInPackageJson(options, get("packageJson")),
+    ) => isDependencyInPackageJson(options, getPackageJson()),
   };
-
-  function info() {
-    const {
-      packageJson,
-      name: packageName,
-      dirpath: projectDir,
-      path: packageJsonPath,
-    } = getProjectInfo(source, projectOptions) ?? {};
-
-    return {
-      packageJson,
-      packageJsonPath,
-      packageName,
-      projectDir,
-    };
-  }
-
-  function get<K extends keyof ReturnType<typeof info>>(key: K) {
-    return info()[key]!;
-  }
 };

@@ -1,0 +1,66 @@
+import { afterAll, describe, expect, it } from "vitest";
+import { readFileSync, rmSync } from "node:fs";
+import os from "node:os";
+import process from "node:process";
+import { join } from "pathe";
+import { createFile } from "@/fs/createFile";
+import { isWritable } from "@/fs/isFileWritable";
+import { getFilenameFromPath } from "@/path/getFilenameFromPath";
+
+const scratchRoot = join(os.tmpdir(), `package-management-fs-${process.pid}`);
+
+afterAll(() => {
+  rmSync(scratchRoot, { recursive: true, force: true });
+});
+
+describe("createFile", () => {
+  it("writes a file into an existing directory", () => {
+    const target = join(scratchRoot, "top-level.txt");
+
+    createFile(target, "contents");
+
+    expect(readFileSync(target, "utf-8")).toBe("contents");
+  });
+
+  it("creates every missing parent directory", () => {
+    const target = join(scratchRoot, "deeply", "nested", "file.txt");
+
+    // A non-recursive mkdir only works when the immediate parent's own parent
+    // already exists, which is rarely true for a path being created.
+    createFile(target, "nested contents");
+
+    expect(readFileSync(target, "utf-8")).toBe("nested contents");
+  });
+
+  it("honours an explicit encoding passed as a string", () => {
+    const target = join(scratchRoot, "encoded.txt");
+
+    createFile(target, "encoded", "utf-8");
+
+    expect(readFileSync(target, "utf-8")).toBe("encoded");
+  });
+});
+
+describe("isWritable", () => {
+  it("reports an existing file as writable", () => {
+    const target = join(scratchRoot, "writable.txt");
+
+    createFile(target, "writable");
+
+    expect(isWritable(target)).toBe(true);
+  });
+
+  it("reports a path that does not exist as not writable", () => {
+    expect(isWritable(join(scratchRoot, "absent.txt"))).toBe(false);
+  });
+});
+
+describe("getFilenameFromPath", () => {
+  it("returns the base name without its extension", () => {
+    expect(getFilenameFromPath("/a/b/component.ts")).toBe("component");
+  });
+
+  it("keeps interior dots and drops only the final extension", () => {
+    expect(getFilenameFromPath("/a/b/component.test.ts")).toBe("component.test");
+  });
+});

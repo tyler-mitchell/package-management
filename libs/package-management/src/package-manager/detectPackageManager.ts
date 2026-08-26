@@ -80,7 +80,11 @@ export async function detectLockfilePackageManagers<
 ) {
   return filterPackageManagers(
     packageManagers,
-    (packageManager) => packageManager.hasLockfile(options),
+    // Yarn Classic and Berry share a lockfile name, so a lockfile match alone
+    // would report both. The version check settles which one it is.
+    async (packageManager) =>
+      (await packageManager.hasLockfile(options)) &&
+      (await packageManager.matchesVersion(options)),
     options
   );
 }
@@ -97,7 +101,8 @@ export async function detectGlobalPackageManagers<
     // `true`, so every package manager passes the filter regardless of whether
     // it is actually installed.
     async (packageManager) =>
-      Boolean(await packageManager.globalVersion(options)),
+      Boolean(await packageManager.globalVersion(options)) &&
+      (await packageManager.matchesVersion(options)),
     options
   );
 }

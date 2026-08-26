@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getPath } from "../path/getPath";
+import { getGitRootFolder } from "@/path/getGitRootFolder";
 import { basename, join, relative } from "pathe";
 import os from "node:os";
 import process from "node:process";
@@ -85,6 +86,18 @@ describe("alias resolution — repository locations", () => {
     expect(() =>
       getPath({ to: ["<workspace_folder?>"], cwd: outsideAnyWorkspace })
     ).toThrow(/Could not find workspace folder/);
+  });
+
+  it("reports a missing git root without throwing when asked not to", () => {
+    expect(
+      getGitRootFolder({ cwd: os.tmpdir(), throwIfNotFound: false })
+    ).toBeUndefined();
+  });
+
+  it("throws for a missing git root by default", () => {
+    expect(() => getGitRootFolder({ cwd: os.tmpdir() })).toThrow(
+      /not in a git repository/
+    );
   });
 
   it("honours an explicit cwd", () => {

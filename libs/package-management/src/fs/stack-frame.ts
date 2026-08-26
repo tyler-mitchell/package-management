@@ -1,7 +1,6 @@
 import ErrorStackParser, { type StackFrame } from "error-stack-parser";
 import { basename, dirname, normalize, relative } from "pathe";
 import process from "node:process";
-import { win32, posix } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getArrayItemAtOffset, isMatching } from "@/utils";
 
@@ -162,25 +161,4 @@ function removeStart(input: string, value: string) {
 function placeFormatter(index?: number, total?: number) {
   if (index === undefined || !total) return undefined;
   return [index, total].join("/");
-}
-
-function relativeToCwd<T extends string | undefined>(
-  filepath: T,
-  cwd?: string
-) {
-  if (!filepath) return undefined;
-
-  const to = normalize(filepath);
-  const from = normalize(cwd ?? process.cwd());
-  const relativePath = relative(from, to);
-
-  return {
-    path: relativePath,
-    inScope: to.startsWith(from),
-    absolutePaths: {
-      path: filepath,
-      unix: posix.normalize(relativePath),
-      win32: win32.normalize(relativePath),
-    },
-  };
 }

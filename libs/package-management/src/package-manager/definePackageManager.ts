@@ -35,6 +35,12 @@ export interface PackageManager<ID extends string = PackageManagerId> {
   readLockfile: AsyncCacheFn<string | undefined, { cwd?: string }>;
   globalVersion: AsyncCacheFn<string | undefined, PackageManagerScriptOptions>;
 
+  /**
+   * Whether the installed version is the one this config describes. Always
+   * true for managers whose lockfile already identifies them unambiguously.
+   */
+  matchesVersion: AsyncCacheFn<boolean, PackageManagerScriptOptions>;
+
   definePackage: DefinePackageFn;
 
   defineImportMap: <T extends ImportMap>(
@@ -73,6 +79,23 @@ export function definePackageManager<ID extends string>(
     const lockfiles = toArray(config.meta.lockfile);
     return await findUp(lockfiles, { cwd });
   });
+
+  const globalVersion = asyncCacheFn(
+    async (options?: PackageManagerScriptOptions) => {
+      try {
+        const { stdout } = await $$({
+          command,
+          args: [agentOptions.version],
+          cwd: defaultCwd,
+          ...options,
+        });
+
+        return `${stdout}`.trim();
+      } catch {
+        return undefined;
+      }
+    }
+  );
 
   const installPackage: PackageManager["installPackage"] = async (
     packageName,
@@ -162,21 +185,17 @@ export function definePackageManager<ID extends string>(
       return readFile(lockfilePath, "utf8");
     }),
 
-    globalVersion: asyncCacheFn(async (...args) => {
-      const [options] = args;
+    globalVersion,
 
-      try {
-        const { stdout } = await $$({
-          command,
-          args: [agentOptions.version],
-          cwd: defaultCwd,
-          ...options,
-        });
+    matchesVersion: asyncCacheFn(async (...args) => {
+      const { matchesVersion } = config.meta;
 
-        return `${stdout}`;
-      } catch (e) {
-        return undefined;
-      }
+      // No predicate means the lockfile already identifies this manager.
+      if (!matchesVersion) return true;
+
+      const version = await globalVersion.noCache(...args);
+
+      return version ? matchesVersion(version) : false;
     }),
 
     definePackage,

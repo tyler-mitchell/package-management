@@ -7,6 +7,10 @@ export function isPackageNameInWorkspace(
   options?: PathOptions
 ) {
   if (!name) return false;
-  const infoMap = getWorkspacePackageInfoMap(options);
+
+  // Matches the other name-based lookups: the workspace root counts as being
+  // in the workspace.
+  const infoMap = getWorkspacePackageInfoMap({ ...options, includeRoot: true });
+
   return Boolean(infoMap?.[name]);
 }

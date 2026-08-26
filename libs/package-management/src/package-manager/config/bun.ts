@@ -6,7 +6,9 @@ export default definePackageManagerConfig({
   command: "bun",
   runner: "bunx",
   meta: {
-    lockfile: "bun.lockb",
+    // Bun wrote a binary lockfile originally and a text one from 1.2 onwards,
+    // so a project using either must still be detected.
+    lockfile: ["bun.lock", "bun.lockb"],
   },
   args: {
     install: {
@@ -17,7 +19,7 @@ export default definePackageManagerConfig({
       },
     },
     uninstall: {
-      command: "uninstall",
+      command: "remove",
     },
   },
   options: {

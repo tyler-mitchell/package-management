@@ -1,5 +1,4 @@
 import type { ResolvedPromise, __ } from "@/types";
-import type { InstallPackageOptions } from "@antfu/install-pkg";
 
 export interface ImportModuleData<T = any> {
   /**
@@ -28,9 +27,12 @@ export interface ImportPackageData<T = any> extends ImportModuleData<T> {
   dev?: boolean;
 
   /**
-   * Additional installation options
+   * When enabled, a package already declared as a dependency is not installed
+   * again, so a satisfied import map costs no package manager invocations.
+   *
+   * @default true
    */
-  installOptions?: Omit<InstallPackageOptions, "dev">;
+  checkExists?: boolean;
 }
 
 export type ImportOption<T = any> =

@@ -105,7 +105,10 @@ async function installImport(
 ) {
   if (!packageName) return;
 
-  const { checkExists } = options ?? {};
+  // Default to skipping packages already declared as dependencies. Installing
+  // unconditionally spawns a package manager on every import, which is the
+  // dominant cost of resolving an import map that is already satisfied.
+  const { checkExists = true } = options ?? {};
 
   if (checkExists && isPackageDependency(packageName)) return;
 
