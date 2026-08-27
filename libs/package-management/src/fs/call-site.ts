@@ -1,5 +1,6 @@
 import { getCallSites } from "node:util";
 import { fileURLToPath } from "node:url";
+import { isAbsolute } from "pathe";
 
 /**
  * Node caps this at 200. It is a request, not a truncation risk: unlike
@@ -47,7 +48,7 @@ export interface CallerLocationOptions {
 export function resolveCallerFile(options?: CallerLocationOptions) {
   const { from, boundaryFunctionName, internalScripts = [] } = options ?? {};
 
-  if (from) return toFilePath(String(from));
+  if (from) return toCallerPath(String(from));
 
   const sites = getCallSites(MAX_FRAMES, { sourceMap: true });
 
@@ -86,10 +87,35 @@ function firstForeignFrame(sites: CallSite[], internalScripts: string[]) {
   const internal = new Set(internalScripts.map(toFilePath));
 
   return sites.find(
-    (site) => site.scriptName && !internal.has(toFilePath(site.scriptName))
+    (site) =>
+      // Frames from `node:` internals and evaluated code name no file, so they
+      // are never the caller's location however far out they appear.
+      isFileScript(site.scriptName) &&
+      !internal.has(toFilePath(site.scriptName))
   )?.scriptName;
 }
+
+const isFileScript = (script: string | undefined): script is string =>
+  Boolean(script) && (script!.startsWith("file:") || isAbsolute(script!));
 
 /** ES module frames report their script as a `file://` URL. */
 const toFilePath = (script: string) =>
   script.startsWith("file:") ? fileURLToPath(script) : script;
+
+/**
+ * `from` names a module, so it is a `file:` URL or an absolute path and
+ * nothing else.
+ *
+ * Without this check a `http:`, `data:` or `node:` specifier was returned as
+ * though it were a path — `"http://host/x.js"` became `"http:/host/x.js"` and
+ * then served as a base directory for anything joined onto it.
+ */
+function toCallerPath(from: string) {
+  if (from.startsWith("file:")) return fileURLToPath(from);
+
+  if (isAbsolute(from)) return from;
+
+  throw new Error(
+    `\`from\` must be a file: URL or an absolute path, received ${JSON.stringify(from)}. Pass \`import.meta.url\`.`
+  );
+}
