@@ -13,11 +13,17 @@ import { getPath } from "../../../../dist/index.mjs";
  */
 const thisFile = fileURLToPath(import.meta.url);
 
+const from = import.meta.url;
+
 process.stdout.write(
   JSON.stringify({
     currentFile: getPath({ to: ["<current_file>"] }),
     currentFolder: getPath({ to: ["<current_folder>"] }),
     currentFolderSubpath: getPath({ to: ["<current_folder>", "current-file.mjs"] }),
+    // The same answers with the caller naming itself, which is what a consumer
+    // should prefer — it does not depend on the stack at all.
+    currentFileFrom: getPath({ to: ["<current_file>"], from }),
+    currentFolderFrom: getPath({ to: ["<current_folder>"], from }),
     expectedFile: thisFile,
     expectedFolder: path.dirname(thisFile),
   })

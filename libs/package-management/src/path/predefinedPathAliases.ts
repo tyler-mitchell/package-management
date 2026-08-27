@@ -39,7 +39,7 @@ export const predefinedPathAliases = {
     ],
   },
   "<package_folder>": {
-    resolve: (opts) => getPackageFolder(opts)!,
+    resolve: (opts) => getPackageFolder(opts),
     subpaths: [
       {
         to: "node_modules",
@@ -79,13 +79,15 @@ export const predefinedPathAliases = {
     subpaths: [] as any[],
   },
   "<current_file>": {
-    // resolve: () => fileURLToPath(import.meta.url),
-    resolve: () => _filename({ rootFunctionName: "getFilePath" }) ?? "",
+    // `from` is the caller naming itself, which is exact. Without it the stack
+    // is read, which is a best effort and Node-only.
+    resolve: (opts) =>
+      _filename({ from: opts?.from, boundaryFunctionName: "getFilePath" }),
     subpaths: [] as any[],
   },
   "<current_folder>": {
-    // resolve: () => fileURLToPath(import.meta.url),
-    resolve: () => _dirname({ rootFunctionName: "getFilePath" }) ?? "",
+    resolve: (opts) =>
+      _dirname({ from: opts?.from, boundaryFunctionName: "getFilePath" }),
     subpaths: [] as any[],
   },
 } as const satisfies AliasDefinitionMap;

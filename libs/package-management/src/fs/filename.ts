@@ -1,18 +1,29 @@
-/* eslint-disable unicorn/error-message */
-import { findCallerStackFrame } from "./stack-frame";
+import { dirname } from "pathe";
+import { resolveCallerFile, type CallerLocationOptions } from "./call-site";
 
-interface StackFrameOptions {
-  rootFunctionName?: string;
-}
+export type { CallerLocationOptions } from "./call-site";
 
-export const _filename = (options?: StackFrameOptions) => {
-  const { filePath } =
-    findCallerStackFrame({ error: new Error(), ...options }) ?? {};
-  return filePath;
+/**
+ * The calling file's absolute path.
+ *
+ * Pass `from: import.meta.url` wherever the caller can — that is exact in every
+ * runtime, while the stack fallback is Node-only.
+ */
+export const _filename = (options?: CallerLocationOptions) =>
+  resolveCallerFile(withOwnScript(options));
+
+/** The directory of the calling file. */
+export const _dirname = (options?: CallerLocationOptions) => {
+  const filePath = resolveCallerFile(withOwnScript(options));
+
+  return filePath === undefined ? undefined : dirname(filePath);
 };
 
-export const _dirname = (options?: StackFrameOptions) => {
-  const { dirPath } =
-    findCallerStackFrame({ error: new Error(), ...options }) ?? {};
-  return dirPath;
-};
+/**
+ * This module sits between the caller and the stack reader, so unbundled it is
+ * a distinct script that would otherwise look like the caller.
+ */
+const withOwnScript = (options?: CallerLocationOptions) => ({
+  ...options,
+  internalScripts: [...(options?.internalScripts ?? []), import.meta.url],
+});

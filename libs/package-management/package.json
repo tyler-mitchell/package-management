@@ -8,6 +8,9 @@
   "version": "0.0.16",
   "license": "MIT",
   "type": "module",
+  "engines": {
+    "node": ">=22.9"
+  },
   "private": false,
   "repository": {
     "type": "git",
@@ -60,7 +63,6 @@
   "dependencies": {
     "@arktype/util": "^0.0.26",
     "async-cache-fn": "^0.0.3",
-    "error-stack-parser": "^2.1.4",
     "execa": "^10.0.1",
     "find-up": "^8.0.0",
     "globby": "^16.2.4",

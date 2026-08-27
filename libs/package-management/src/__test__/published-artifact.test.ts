@@ -30,6 +30,8 @@ describe("published artifact", () => {
       currentFile,
       currentFolder,
       currentFolderSubpath,
+      currentFileFrom,
+      currentFolderFrom,
       expectedFile,
       expectedFolder,
     } = JSON.parse(stdout);
@@ -37,5 +39,10 @@ describe("published artifact", () => {
     expect(currentFile).toBe(expectedFile);
     expect(currentFolder).toBe(expectedFolder);
     expect(currentFolderSubpath).toBe(expectedFile);
+
+    // Both routes agree against the real bundle: the caller naming itself, and
+    // the stack fallback reading it.
+    expect(currentFileFrom).toBe(expectedFile);
+    expect(currentFolderFrom).toBe(expectedFolder);
   });
 });
