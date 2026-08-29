@@ -1,6 +1,16 @@
 # Changelog
 
 
+
+## 0.1.0
+<sub>2026-08-29</sub>
+
+- *(minor)*
+  Added Node 22.0–22.8 support by feature-detecting util.getCallSites; only the caller-location stack fallback degrades where it is absent.
+- *(patch)* Exported createFile, isWritable, and definePackageManager from the package barrel.
+- *(patch)*
+  Removed the @arktype/util dependency, whose $ark global registry corrupts a consumer's own arktype types in the same process.
+
 ## 0.0.16
 <sub>2026-08-23</sub>
 
