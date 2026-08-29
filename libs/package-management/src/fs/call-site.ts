@@ -1,6 +1,15 @@
-import { getCallSites } from "node:util";
+import util from "node:util";
 import { fileURLToPath } from "node:url";
 import { isAbsolute } from "pathe";
+
+/**
+ * `util.getCallSites` arrived in Node 22.9, and the supported floor is 22.
+ * Naming it in the import list is itself a link-time crash below 22.9 —
+ * which is why `node:util` alone here is a namespace import — so it is read
+ * off the namespace at call time. Where it is absent, `from` (the exact,
+ * documented path) still works and only the stack fallback degrades.
+ */
+const getCallSites = "getCallSites" in util ? util.getCallSites : undefined;
 
 /**
  * Node caps this at 200. It is a request, not a truncation risk: unlike
@@ -9,7 +18,7 @@ import { isAbsolute } from "pathe";
  */
 const MAX_FRAMES = 200;
 
-type CallSite = ReturnType<typeof getCallSites>[number];
+type CallSite = ReturnType<NonNullable<typeof getCallSites>>[number];
 
 export interface CallerLocationOptions {
   /**
@@ -49,6 +58,8 @@ export function resolveCallerFile(options?: CallerLocationOptions) {
   const { from, boundaryFunctionName, internalScripts = [] } = options ?? {};
 
   if (from) return toCallerPath(String(from));
+
+  if (getCallSites === undefined) return undefined;
 
   const sites = getCallSites(MAX_FRAMES, { sourceMap: true });
 
