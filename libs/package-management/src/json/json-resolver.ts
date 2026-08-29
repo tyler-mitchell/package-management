@@ -6,7 +6,8 @@ import type {
   JsonSourceInput as JsonSourceOption,
   JsonSourceInputType as JsonSourceType,
 } from "./json.types";
-import { morph, type isNever } from "@arktype/util";
+import { entriesOf, fromEntries } from "@/utils";
+import type { IsNever } from "@/types";
 
 type JsonSourceResolvers<$data extends object = object> = {
   [K in keyof Required<JsonSourceInput>]: (
@@ -52,7 +53,7 @@ type ResolvedJsonSourceData<
   $as extends "data" | "text" = never,
   $json extends object = object,
 > =
-  isNever<$as> extends false
+  IsNever<$as> extends false
     ? $as extends string
       ? JsonSourceData<$json>[$as]
       : JsonSourceData<$json>
@@ -80,19 +81,25 @@ export function resolveJsonSource<
     sourceData as never
   );
 
-  const resolved = morph(sourceTypeResolvers, (key, v) => {
-    // Only the requested representation is produced. Evaluating both meant a
-    // caller asking for `text` still paid for — and failed on — parsing.
-    if (as && key !== as) return [];
+  // `@arktype/util`'s `morph` used to map these entries. Any version of that
+  // package writes the shared `$ark` global registry and corrupts a
+  // consumer's own arktype in the same process, so the repo's own entries
+  // utilities map them instead.
+  const resolved = fromEntries(
+    entriesOf(sourceTypeResolvers).flatMap(([key, v]) => {
+      // Only the requested representation is produced. Evaluating both meant a
+      // caller asking for `text` still paid for — and failed on — parsing.
+      if (as && key !== as) return [];
 
-    try {
-      return [key, v()];
-    } catch (error) {
-      throw new Error(`Failed to resolve ${key} from ${sourceType}`, {
-        cause: error,
-      });
-    }
-  });
+      try {
+        return [[key, v()] as const];
+      } catch (error) {
+        throw new Error(`Failed to resolve ${key} from ${sourceType}`, {
+          cause: error,
+        });
+      }
+    })
+  ) as unknown as JsonSourceData;
 
   if (as) {
     return resolved[as] as any;

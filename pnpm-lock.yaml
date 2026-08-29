@@ -35,15 +35,9 @@ importers:
 
   libs/package-management:
     dependencies:
-      '@arktype/util':
-        specifier: ^0.0.26
-        version: 0.0.26
       async-cache-fn:
         specifier: ^0.0.3
         version: 0.0.3
-      error-stack-parser:
-        specifier: ^2.1.4
-        version: 2.1.4
       execa:
         specifier: ^10.0.1
         version: 10.0.1
@@ -87,6 +81,9 @@ importers:
       citty:
         specifier: ^0.1.5
         version: 0.1.6
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       free-types:
         specifier: ^0.12.0
         version: 0.12.0
@@ -185,9 +182,6 @@ packages:
 
   '@antfu/utils@0.7.10':
     resolution: {integrity: sha512-+562v9k4aI80m1+VuMHehNJWLOFjBnXn3tdOitzD0il5b7smkSBal4+a3oKiQTbrwMmN/TBUMDvbdoWDehgOww==}
-
-  '@arktype/util@0.0.26':
-    resolution: {integrity: sha512-OfshbkOWYh3j7qwB+hRv+7/AS8dUEiGF5pXwpv7lWRwxhUCLogM8uY+ttTHGPWkF4E+0i0ytx0r0uIKul6YmOA==}
 
   '@babel/code-frame@7.29.7':
     resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
@@ -4221,8 +4215,6 @@ snapshots:
       tinyexec: 1.3.0
 
   '@antfu/utils@0.7.10': {}
-
-  '@arktype/util@0.0.26': {}
 
   '@babel/code-frame@7.29.7':
     dependencies:

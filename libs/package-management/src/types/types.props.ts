@@ -1,4 +1,4 @@
-import type { split as SplitString } from "@arktype/util";
+import type { Split as SplitString } from "string-ts";
 
 export type KeyOf<T, K> = K extends keyof T ? K : never;
 
