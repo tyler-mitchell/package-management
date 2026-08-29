@@ -7,6 +7,8 @@ export default definePackageManagerConfig({
   runner: "yarn dlx",
   meta: {
     lockfile: "yarn.lock",
+    // Classic shares this command and lockfile; everything past 1.x is Berry.
+    matchesVersion: (version) => !version.startsWith("1."),
   },
   args: {
     install: {

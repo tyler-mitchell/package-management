@@ -8,7 +8,9 @@ const project = workspace.getProject("<package_folder>");
 
 const packageManager = await project.findPackageManager();
 
-describe("install and uninstall packages", { timeout: 20000 }, () => {
+// These drive a real package manager against the real registry, so the budget
+// tracks how long installs take rather than anything about this code.
+describe("install and uninstall packages", { timeout: 120000 }, () => {
   it("should install and uninstall package", async () => {
     const packageName = getPackageName("lodash-es");
 

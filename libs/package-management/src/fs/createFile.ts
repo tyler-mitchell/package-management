@@ -17,7 +17,9 @@ export function createFile(
   const writeFileOptions = { encoding, ...rest };
 
   if (!existsSync(dir)) {
-    mkdirSync(dir);
+    // Without `recursive`, writing to `a/b/c.txt` fails whenever `a` is also
+    // missing, which is the usual case for a path being created.
+    mkdirSync(dir, { recursive: true });
   }
 
   writeFileSync(filePath, data, writeFileOptions);

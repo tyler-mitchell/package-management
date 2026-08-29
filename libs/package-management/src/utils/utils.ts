@@ -53,7 +53,17 @@ export function defaults<
       }
     | undefined,
 >(obj: T | undefined, defaults: D): __<T & NonNullable<D>> {
-  return Object.assign({}, defaults, obj);
+  // An explicit `undefined` means "not provided", so it must not overwrite the
+  // default — the return type promises the default is always present.
+  const provided = Object.entries(obj ?? {}).filter(
+    ([, value]) => value !== undefined
+  );
+
+  return Object.assign(
+    {},
+    defaults,
+    Object.fromEntries(provided)
+  ) as __<T & NonNullable<D>>;
 }
 
 interface A {
@@ -75,8 +85,10 @@ export function normalizePath(
   path: string,
   option?: boolean | ((path: string) => string)
 ) {
+  // A supplied normalizer is the whole reason the option accepts a function;
+  // recursing into the default branch discarded it silently.
   if (typeof option === "function") {
-    return normalizePath(path);
+    return option(path);
   }
 
   if (option === false) {
@@ -112,8 +124,8 @@ export function getArrayItemAtOffset<T>(
 }
 
 export function isMatching(a: string | undefined, b: string | undefined) {
-  if (!a || !b) return false;
-  return a === b;
+  // Two equal empty strings match; only an absent side does not.
+  return a !== undefined && a === b;
 }
 
 export function checkResult<

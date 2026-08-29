@@ -7,6 +7,8 @@ export default definePackageManagerConfig({
   runner: "yarn dlx",
   meta: {
     lockfile: "yarn.lock",
+    // Berry shares this command and lockfile, so the version decides.
+    matchesVersion: (version) => version.startsWith("1."),
   },
   args: {
     install: {

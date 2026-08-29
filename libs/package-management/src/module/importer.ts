@@ -1,4 +1,5 @@
-import { findPackageManager, isPackageDependency } from "..";
+import { isPackageDependency } from "..";
+import { isPackageModuleFound } from "./module-utils";
 import { resolveModule } from "./module-utils";
 import type { __ } from "@/types";
 import type {
@@ -39,25 +40,39 @@ export interface ImporterOptions {
  *
  * @typeparam Imports An array type representing the dynamic imports.
  */
-export function importer<T extends ImportList>(
+export async function importer<T extends ImportList>(
   imports: [...T],
   options?: ImporterOptions
 ): Promise<ResolvedImportList<T>> {
   const { install: defaultInstall = true, installer } = options ?? {};
+
+  const resolved = imports.map((option) => resolveImportOption(option));
+
+  const missing = resolved.filter(
+    (option) =>
+      Boolean(option.name) &&
+      (option.install ?? defaultInstall) &&
+      !((option.checkExists ?? true) && isSatisfied(option.name!))
+  );
+
+  // Installed in one batch per dependency kind, before any import runs.
+  // Installing per import concurrently spawns a package manager process per
+  // package against one node_modules, and their interleaved writes corrupt
+  // the manager's own metadata — the same hazard `uninstallPackage` avoids.
+  await installMissing(
+    missing.filter(({ dev }) => !dev).map(({ name }) => name!),
+    { dev: false },
+    installer
+  );
+
+  await installMissing(
+    missing.filter(({ dev }) => dev).map(({ name }) => name!),
+    { dev: true },
+    installer
+  );
+
   return Promise.all(
-    imports.map(async (e) => {
-      const importOpt = resolveImportOption(e);
-
-      const shouldInstall = importOpt.install ?? defaultInstall;
-
-      if (shouldInstall && importOpt.name) {
-        await installImport(importOpt.name, importOpt, installer);
-      }
-
-      const m = await importOpt.import();
-
-      return resolveModule(m);
-    })
+    resolved.map(async (option) => resolveModule(await option.import()))
   ) as Promise<ResolvedImportList<T>>;
 }
 
@@ -98,21 +113,28 @@ export type InstallerFn = (
   options?: { dev?: boolean; checkExists?: boolean }
 ) => Promise<void>;
 
-async function installImport(
-  packageName: string | string[],
-  options?: Parameters<InstallerFn>[1],
+/**
+ * Whether a package is both declared and actually resolvable.
+ *
+ * Declaration alone is not enough: a fresh clone with no node_modules declares
+ * everything and resolves nothing, and skipping the install there fails at the
+ * import instead. Resolution alone is not enough either, since a hoisted
+ * transitive dependency resolves without being this package's to rely on.
+ */
+const isSatisfied = (packageName: string) =>
+  isPackageDependency(packageName) && isPackageModuleFound(packageName);
+
+async function installMissing(
+  packageNames: string[],
+  options: Parameters<InstallerFn>[1],
   installer?: InstallerFn
 ) {
-  if (!packageName) return;
-
-  const { checkExists } = options ?? {};
-
-  if (checkExists && isPackageDependency(packageName)) return;
+  if (packageNames.length === 0) return;
 
   const installerFn =
     installer ??
     (await workspace.getProject("<package_folder>").findPackageManager())
       .installPackage;
 
-  await installerFn(packageName, options);
+  await installerFn(packageNames, options);
 }

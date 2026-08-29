@@ -1,6 +1,7 @@
 import type { PathOptions } from "@/types";
 import * as WST from "workspace-tools";
 import process from "node:process";
+import { checkResult } from "@/utils";
 
 export interface GetWorkspaceFolderOptions<$Validate extends boolean = true>
   extends PathOptions {
@@ -27,7 +28,10 @@ export function getWorkspaceFolder<$ThrowIfNotFound extends boolean = true>(
     ? WST.findProjectRoot
     : WST.getWorkspaceManagerRoot;
 
-  const folder = getFolder(cwd);
+  // `findProjectRoot` throws rather than returning undefined when it finds
+  // nothing, which made `throwIfNotFound: false` throw anyway. Both outcomes
+  // are routed through the same decision below.
+  const folder = checkResult(() => getFolder(cwd)).data;
 
   if (folder === undefined && throwIfNotFound) {
     throw new Error(`Could not find workspace folder`);

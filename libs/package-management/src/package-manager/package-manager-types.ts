@@ -6,6 +6,14 @@ export interface PackageManagerConfig<ID extends string = string> {
   name: string;
   meta: {
     lockfile: string | string[];
+    /**
+     * Distinguishes package managers that share both a command and a lockfile
+     * name, where the lockfile alone cannot identify which one a project uses —
+     * Yarn Classic and Yarn Berry being the case this exists for.
+     *
+     * Omit when the lockfile is already unambiguous.
+     */
+    matchesVersion?: (version: string) => boolean;
   };
   runner: string;
   args: {

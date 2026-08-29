@@ -35,6 +35,12 @@ export interface PackageManager<ID extends string = PackageManagerId> {
   readLockfile: AsyncCacheFn<string | undefined, { cwd?: string }>;
   globalVersion: AsyncCacheFn<string | undefined, PackageManagerScriptOptions>;
 
+  /**
+   * Whether the installed version is the one this config describes. Always
+   * true for managers whose lockfile already identifies them unambiguously.
+   */
+  matchesVersion: AsyncCacheFn<boolean, PackageManagerScriptOptions>;
+
   definePackage: DefinePackageFn;
 
   defineImportMap: <T extends ImportMap>(
@@ -74,29 +80,46 @@ export function definePackageManager<ID extends string>(
     return await findUp(lockfiles, { cwd });
   });
 
+  const globalVersion = asyncCacheFn(
+    async (options?: PackageManagerScriptOptions) => {
+      try {
+        const { stdout } = await $$({
+          command,
+          args: [agentOptions.version],
+          cwd: defaultCwd,
+          ...options,
+        });
+
+        return `${stdout}`.trim();
+      } catch {
+        return undefined;
+      }
+    }
+  );
+
   const installPackage: PackageManager["installPackage"] = async (
     packageName,
     options
   ) => {
     const install = agentArgs.install;
 
-    // @ts-expect-error
-    const { dev, preferOffline } = select(
-      install.options,
-      {
-        preferOffline: true,
-        cwd: defaultCwd,
-        ...options,
-      },
-      "true:pick"
-    );
+    const { dev = false, preferOffline = true } = options ?? {};
+
+    const flags = select(install.options, { dev, preferOffline }, "true:pick");
 
     const packageNames = toArray(packageName);
+
+    assertInstallableNames(packageNames);
 
     try {
       await $$({
         command,
-        args: [install.command, dev, preferOffline, ...packageNames],
+        args: [
+          install.command,
+          flags.dev,
+          flags.preferOffline,
+          ...packageNames,
+        ],
         cwd: defaultCwd,
         ...options,
       });
@@ -162,21 +185,17 @@ export function definePackageManager<ID extends string>(
       return readFile(lockfilePath, "utf8");
     }),
 
-    globalVersion: asyncCacheFn(async (...args) => {
-      const [options] = args;
+    globalVersion,
 
-      try {
-        const { stdout } = await $$({
-          command,
-          args: [agentOptions.version],
-          cwd: defaultCwd,
-          ...options,
-        });
+    matchesVersion: asyncCacheFn(async (...args) => {
+      const { matchesVersion } = config.meta;
 
-        return `${stdout}`;
-      } catch (e) {
-        return undefined;
-      }
+      // No predicate means the lockfile already identifies this manager.
+      if (!matchesVersion) return true;
+
+      const version = await globalVersion.noCache(...args);
+
+      return version ? matchesVersion(version) : false;
     }),
 
     definePackage,
@@ -193,6 +212,25 @@ export function definePackageManager<ID extends string>(
       });
     },
   };
+}
+
+/**
+ * Package names become argv entries verbatim. A name starting with `-` is read
+ * by the package manager as a flag, so a caller passing along untrusted input
+ * could turn an install into `--registry=...` or similar. There is no shell
+ * involved, so this is argument injection rather than shell injection, but the
+ * name still has to be rejected rather than forwarded.
+ */
+function assertInstallableNames(packageNames: string[]) {
+  const rejected = packageNames.filter(
+    (name) => name.length === 0 || name.startsWith("-")
+  );
+
+  if (rejected.length > 0) {
+    throw new Error(
+      `Not a package name: ${rejected.map((name) => JSON.stringify(name)).join(", ")}. A package name cannot be empty or begin with "-".`
+    );
+  }
 }
 
 async function $$(options: {

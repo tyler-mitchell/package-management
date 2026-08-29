@@ -1,13 +1,22 @@
 import type { Awaitable } from "@/types";
 import type { ResolveOptions } from "mlly";
-import { resolvePathSync, fileURLToPath } from "mlly";
+import { resolvePathSync } from "mlly";
 import { normalizePath } from "@/utils";
 
 export async function resolveModule<T>(
   module: Awaitable<T>
 ): Promise<T extends { default: infer U } ? U : T> {
   const resolved = await module;
-  return (resolved as any).default || resolved;
+
+  // Presence, not truthiness: `|| resolved` handed back the whole namespace for
+  // a module whose default export is `0`, `""` or `false`, and threw outright
+  // when the resolved value was null.
+  const hasDefault =
+    resolved !== null && typeof resolved === "object" && "default" in resolved;
+
+  return (
+    hasDefault ? (resolved as { default: unknown }).default : resolved
+  ) as T extends { default: infer U } ? U : T;
 }
 
 export interface ResolveModulePathOptions extends Omit<ResolveOptions, "url"> {
@@ -26,17 +35,10 @@ export function resolvePackageModulePath(
   name: string,
   options?: ResolveModulePathOptions
 ) {
-  const resolvedPath = findResolvedModulePath(
-    [`${name}/package.json`, name],
-    options
-  );
-
-  if (resolvedPath === undefined) {
-    console.error(`Could not resolve package ${name}`);
-    return undefined;
-  }
-
-  return resolvedPath;
+  // Returning undefined is this function's ordinary "not installed" answer,
+  // and `isPackageModuleFound` is a predicate built on it — logging here made
+  // every negative answer print an error the caller had already handled.
+  return findResolvedModulePath([`${name}/package.json`, name], options);
 }
 
 export function findResolvedModulePath(

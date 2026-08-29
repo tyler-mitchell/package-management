@@ -6,6 +6,7 @@ import bun from "./config/bun";
 import npm from "./config/npm";
 import pnpm from "./config/pnpm";
 import yarn from "./config/yarn";
+import yarnBerry from "./config/yarn-berry";
 import type { Awaitable } from "@/types";
 import {
   findPackageManager,
@@ -20,7 +21,7 @@ import {
 
 export type PackageManagerId = (typeof packageManagerConfigs)[number]["id"];
 
-export const packageManagerConfigs = [pnpm, yarn, bun, npm];
+export const packageManagerConfigs = [pnpm, yarn, yarnBerry, bun, npm];
 
 export function definePackageManagerClient(
   options: DetectPackageManagerOptions

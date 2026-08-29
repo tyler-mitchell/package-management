@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { getPath } from "../path/getPath";
-import { basename, join, relative } from "pathe";
+import { getGitRootFolder } from "@/path/getGitRootFolder";
+import { createFile } from "@/fs/createFile";
+import { execaSync } from "execa";
+import { rmSync } from "node:fs";
+import { basename, dirname, join, relative } from "pathe";
 import os from "node:os";
 import process from "node:process";
 
@@ -72,19 +76,41 @@ describe("alias resolution — repository locations", () => {
   });
 
   it("gives <workspace_folder?> no git-root fallback, unlike <workspace_folder>", () => {
-    const outsideAnyWorkspace = os.tmpdir();
+    // The two variants only differ inside a git repository that is not a
+    // workspace: anywhere else they either both resolve or both fail.
+    const repo = join(os.tmpdir(), `package-management-repo-${process.pid}`);
 
-    // With the fallback, resolution continues past the missing workspace and
-    // fails looking for a git root.
-    expect(() =>
-      getPath({ to: ["<workspace_folder>"], cwd: outsideAnyWorkspace })
-    ).toThrow(/not in a git repository/);
+    createFile(join(repo, "package.json"), `{"name":"standalone"}`);
 
-    // Without it, resolution stops at the missing workspace — which is the
-    // whole point of the `?` variant.
-    expect(() =>
-      getPath({ to: ["<workspace_folder?>"], cwd: outsideAnyWorkspace })
-    ).toThrow(/Could not find workspace folder/);
+    execaSync("git", ["init", "--quiet"], { cwd: repo });
+
+    try {
+      // With the fallback, resolution continues past the missing workspace and
+      // settles on the git root.
+      expect(getPath({ to: ["<workspace_folder>"], cwd: repo })).toContain(
+        "package-management-repo-"
+      );
+
+      // Without it, resolution stops at the missing workspace — which is the
+      // whole point of the `?` variant.
+      expect(() =>
+        getPath({ to: ["<workspace_folder?>"], cwd: repo })
+      ).toThrow(/Could not find workspace folder/);
+    } finally {
+      rmSync(repo, { recursive: true, force: true });
+    }
+  });
+
+  it("reports a missing git root without throwing when asked not to", () => {
+    expect(
+      getGitRootFolder({ cwd: os.tmpdir(), throwIfNotFound: false })
+    ).toBeUndefined();
+  });
+
+  it("throws for a missing git root by default", () => {
+    expect(() => getGitRootFolder({ cwd: os.tmpdir() })).toThrow(
+      /not in a git repository/
+    );
   });
 
   it("honours an explicit cwd", () => {
@@ -100,6 +126,64 @@ describe("alias resolution — failure reporting", () => {
     expect(() => getPath({ to: ["<not_an_alias>"] })).toThrow(
       /Path alias resolved to no location/
     );
+  });
+
+  it("keeps the alias when a later segment walks upward", () => {
+    // Joining before substituting let `..` cancel the token itself, which then
+    // matched no alias and produced a plausible relative path instead.
+    expect(getPath({ to: ["<cwd>", ".."] })).toBe(dirname(process.cwd()));
+
+    expect(getPath({ to: ["<cwd>", "../sibling"] })).toBe(
+      join(dirname(process.cwd()), "sibling")
+    );
+  });
+
+  it("refuses a subpath of an alias that resolves nowhere", () => {
+    // The bare alias was guarded but its subpaths were not, so an unresolvable
+    // parent yielded a path rooted at `/`.
+    expect(() =>
+      getPath({ to: ["<package_folder>/node_modules"], cwd: os.tmpdir() })
+    ).toThrow(/resolved to no location/);
+  });
+
+  it("loads the predefined aliases without a circular import", async () => {
+    // Importing these through the barrel is a cycle back into `getPath`, which
+    // builds its map from this module at evaluation time.
+    await expect(
+      import("@/path/predefinedPathAliases")
+    ).resolves.toHaveProperty("predefinedPathAliases");
+  });
+
+  it("resolves a glob to a matching path", () => {
+    expect(
+      getPath({ to: ["<package_folder>", "package.json"], glob: true })
+    ).toBe(getPath({ to: ["<package_folder>", "package.json"] }));
+  });
+
+  it("reports an unmatched glob as undefined", () => {
+    expect(
+      getPath({ to: ["<package_folder>", "*.definitely-not-here"], glob: true })
+    ).toBeUndefined();
+  });
+
+  it("resolves an existing path when asked to validate", () => {
+    expect(
+      getPath({ to: ["<package_folder>", "package.json"], checkExistence: true })
+    ).toContain("package.json");
+  });
+
+  it("still surfaces an unresolvable alias while validating", () => {
+    // A caller mistake and a missing file are different problems; reporting
+    // the former as "no such path" sends the reader looking for a file.
+    expect(() =>
+      // @ts-expect-error — exercising the runtime guard behind the alias union.
+      getPath({ to: ["<not_an_alias>"], checkExistence: true })
+    ).toThrow(/resolved to no location/);
+
+    expect(() =>
+      // @ts-expect-error — exercising the runtime guard behind the alias union.
+      getPath({ to: ["<not_an_alias>"], glob: true })
+    ).toThrow(/resolved to no location/);
   });
 
   it("reports a missing path as undefined only when asked to validate", () => {

@@ -24,6 +24,8 @@ export type IsUnknown<t> = unknown extends t
     : true
   : false;
 
+export type IsNever<T> = [T] extends [never] ? true : false;
+
 export type AnyFunction = (...args: any[]) => any;
 
 export type StringLiteral<T extends string> = T | (string & {});

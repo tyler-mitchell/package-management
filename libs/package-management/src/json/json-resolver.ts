@@ -1,11 +1,13 @@
 import { readFileSync } from "node:fs";
+import { parse as parseJsonc } from "jsonc-parser";
 import type {
   JsonSourceData,
   JsonSourceInput,
   JsonSourceInput as JsonSourceOption,
   JsonSourceInputType as JsonSourceType,
 } from "./json.types";
-import { morph, type isNever } from "@arktype/util";
+import { entriesOf, fromEntries } from "@/utils";
+import type { IsNever } from "@/types";
 
 type JsonSourceResolvers<$data extends object = object> = {
   [K in keyof Required<JsonSourceInput>]: (
@@ -27,7 +29,9 @@ const jsonSourceResolvers: JsonSourceResolvers = {
   text: (text: string) => {
     return {
       text: () => text,
-      data: () => JSON.parse(text),
+      // `jsonc-parser`'s parse, not `JSON.parse`: the whole point of this
+      // module is editing files like tsconfig.json, which carry comments.
+      data: () => parseJsonc(text),
     };
   },
 
@@ -35,7 +39,9 @@ const jsonSourceResolvers: JsonSourceResolvers = {
     const text = readFileSync(filepath, "utf-8");
     return {
       text: () => text,
-      data: () => JSON.parse(text),
+      // `jsonc-parser`'s parse, not `JSON.parse`: the whole point of this
+      // module is editing files like tsconfig.json, which carry comments.
+      data: () => parseJsonc(text),
     };
   },
 };
@@ -47,7 +53,7 @@ type ResolvedJsonSourceData<
   $as extends "data" | "text" = never,
   $json extends object = object,
 > =
-  isNever<$as> extends false
+  IsNever<$as> extends false
     ? $as extends string
       ? JsonSourceData<$json>[$as]
       : JsonSourceData<$json>
@@ -61,7 +67,13 @@ export function resolveJsonSource<
     Object.entries(source).find(([_, selected]) => selected !== undefined) ??
     [];
 
-  if (!sourceType || !(sourceType in jsonSourceResolvers) || !sourceData) {
+  // An empty string is a valid document to seed edits into, so only a genuinely
+  // absent source is rejected.
+  if (
+    !sourceType ||
+    !(sourceType in jsonSourceResolvers) ||
+    sourceData === undefined
+  ) {
     throw new Error("Invalid source data");
   }
 
@@ -69,14 +81,25 @@ export function resolveJsonSource<
     sourceData as never
   );
 
-  const resolved = morph(sourceTypeResolvers, (key, v) => {
-    try {
-      const value = v();
-      return !as || key === as ? [key, value] : [];
-    } catch (e) {
-      throw new Error(`Failed to resolve ${key} from ${sourceType}`);
-    }
-  });
+  // `@arktype/util`'s `morph` used to map these entries. Any version of that
+  // package writes the shared `$ark` global registry and corrupts a
+  // consumer's own arktype in the same process, so the repo's own entries
+  // utilities map them instead.
+  const resolved = fromEntries(
+    entriesOf(sourceTypeResolvers).flatMap(([key, v]) => {
+      // Only the requested representation is produced. Evaluating both meant a
+      // caller asking for `text` still paid for — and failed on — parsing.
+      if (as && key !== as) return [];
+
+      try {
+        return [[key, v()] as const];
+      } catch (error) {
+        throw new Error(`Failed to resolve ${key} from ${sourceType}`, {
+          cause: error,
+        });
+      }
+    })
+  ) as unknown as JsonSourceData;
 
   if (as) {
     return resolved[as] as any;

@@ -26,7 +26,23 @@ export type AliasMap<TAliases extends AliasDefinitionMap = AliasDefinitionMap> =
     [K in keyof TAliases as `${Extract<K, string>}/${NonNullable<TAliases[K]["subpaths"]>[number]["to"]}`]: TAliases[K]["resolve"];
   };
 
-type ResolvePathAliasFn = (opts?: { cwd?: string }) => string;
+export interface PathAliasResolveOptions {
+  cwd?: string;
+  /**
+   * The calling module's own URL — `import.meta.url`. Only the caller-relative
+   * aliases read it, and only they need it.
+   */
+  from?: string | URL;
+}
+
+/**
+ * `undefined` is a real answer: an alias can name a location that does not
+ * exist in this context, and callers assert on it rather than receiving a
+ * path assembled from nothing.
+ */
+type ResolvePathAliasFn = (
+  opts?: PathAliasResolveOptions
+) => string | undefined;
 
 type StringKeyOf<T> = Extract<keyof T, string>;
 
@@ -71,6 +87,14 @@ export interface GetPathOptions<
   to: PathTo<TAlias>;
   startingFrom?: PathTo<TAlias>;
   cwd?: string;
+  /**
+   * The calling module's own URL — `import.meta.url`.
+   *
+   * Required in any runtime without `node:util`'s call sites, and worth
+   * passing regardless: a module naming itself is exact, whereas inferring the
+   * caller from the stack is a best effort.
+   */
+  from?: string | URL;
   checkExistence?: TValidate;
   glob?: TGlob;
 }
@@ -89,7 +113,7 @@ function getAliasedFilePath<
   : TGlob extends true
     ? string | undefined
     : string {
-  const { to, startingFrom, cwd, checkExistence, glob } =
+  const { to, startingFrom, cwd, from, checkExistence, glob } =
     typeof options === "string" || Array.isArray(options)
       ? ({ to: options } as GetPathOptions<
           StringKeyOf<TAliasMap>,
@@ -98,20 +122,23 @@ function getAliasedFilePath<
         >)
       : options;
 
-  const resolveOptions = { cwd, checkExistence, glob, aliasMap };
+  const resolveOptions = { cwd, from, checkExistence, glob, aliasMap };
 
   try {
     return startingFrom
       ? resolveRelativePathTo(to, startingFrom, resolveOptions)
       : resolvePathTo(to, resolveOptions);
   } catch (error) {
-    // `checkExistence` and `glob` are the only modes whose return type admits
-    // `undefined`. Swallowing anything else reports a missing path as an empty
-    // result and hands callers a `string` that is not one.
-    if (checkExistence || glob) return undefined as never;
+    // Only a genuine miss becomes `undefined`. Catching everything here meant
+    // an unresolvable alias — a caller mistake — was reported as "no such
+    // path", which is a different problem with a different fix.
+    if (error instanceof PathNotFoundError) return undefined as never;
     throw error;
   }
 }
+
+/** A path that resolved correctly but names nothing on disk. */
+class PathNotFoundError extends Error {}
 
 function resolveRelativePathTo(
   to: PathTo,
@@ -123,8 +150,7 @@ function resolveRelativePathTo(
   return path.relative(pathFrom, pathTo);
 }
 
-interface ResolvePathToOptions {
-  cwd?: string;
+interface ResolvePathToOptions extends PathAliasResolveOptions {
   checkExistence?: boolean;
   glob?: boolean;
   aliasMap?: AliasMap | undefined;
@@ -132,53 +158,62 @@ interface ResolvePathToOptions {
 
 function resolvePathTo(
   pathTo: PathTo,
-  { cwd, checkExistence, glob, aliasMap }: ResolvePathToOptions
+  { cwd, from, checkExistence, glob, aliasMap }: ResolvePathToOptions
 ) {
-  const normalized = normalizePathTo(pathTo, { cwd, aliasMap });
+  const normalized = normalizePathTo(pathTo, { cwd, from, aliasMap });
 
   if (glob) {
     const globPaths = globbySync(normalized, { cwd });
     if (!globPaths[0])
-      throw new Error(`No paths found for glob: ${normalized}`);
+      throw new PathNotFoundError(`No paths found for glob: ${normalized}`);
 
     return globPaths[0];
   }
 
   if (!glob && checkExistence && !existsSync(normalized))
-    throw new Error(`Path does not exist: ${normalized}`);
+    throw new PathNotFoundError(`Path does not exist: ${normalized}`);
 
   return normalized;
 }
 
 function normalizePathTo(
   pathTo: PathTo,
-  options?: {
-    cwd?: string;
+  options?: PathAliasResolveOptions & {
     aliasMap?: AliasMap;
   }
 ) {
-  const { cwd, aliasMap } = options ?? {};
-
-  const aliasedPath = Array.isArray(pathTo)
-    ? path.join(...pathTo.filter(isNotNull))
-    : pathTo;
+  const { cwd, from, aliasMap } = options ?? {};
 
   // The tuple form names its alias positionally; the string form carries the
   // alias as a prefix (`"<package_folder>/src"`), so it has to be recovered.
   const baseDir = Array.isArray(pathTo)
     ? pathTo[0]
-    : findAliasToken(aliasedPath, aliasMap);
+    : findAliasToken(pathTo, aliasMap);
 
-  // A bare string that matches no alias is a literal path, not a broken alias.
-  if (baseDir === undefined) return aliasedPath;
+  // Only the string form falls back: a bare string matching no alias is a
+  // literal path. The tuple form's first element is declared to be an alias,
+  // so an unknown one there is a caller error and must surface.
+  if (baseDir === undefined) return pathTo as string;
 
-  const baseDirPath = executeMapFn(aliasMap, baseDir, [{ cwd }]);
+  const baseDirPath = assertResolved(
+    baseDir,
+    executeMapFn(aliasMap, baseDir, [{ cwd, from }])
+  );
 
-  if (typeof baseDirPath !== "string" || baseDirPath.length === 0) {
-    throw new Error(`Path alias resolved to no location: ${baseDir}`);
+  // The alias is substituted before joining. Joining first lets a `..` segment
+  // cancel the token itself — `["<cwd>", ".."]` normalized to `"."` and then
+  // matched no alias, yielding a plausible but entirely wrong relative path.
+  return Array.isArray(pathTo)
+    ? path.join(baseDirPath, ...pathTo.slice(1).filter(isNotNull))
+    : resolveAlias(pathTo, { [baseDir]: baseDirPath });
+}
+
+function assertResolved(alias: string, resolved: unknown) {
+  if (typeof resolved !== "string" || resolved.length === 0) {
+    throw new Error(`Path alias resolved to no location: ${alias}`);
   }
 
-  return resolveAlias(aliasedPath, { [baseDir]: baseDirPath });
+  return resolved;
 }
 
 /**
@@ -224,8 +259,13 @@ export function getAliasMap<const T extends AliasDefinitionMap>(
           const subpathAlias = path.join(alias, to);
           return [
             subpathAlias,
-            (opts?: { cwd?: string }) =>
-              resolveAlias(subpathAlias, { [alias]: resolve(opts) }),
+            (opts?: PathAliasResolveOptions) =>
+              // The same assertion the bare alias gets. Without it an
+              // unresolvable parent produced `join(undefined, "/node_modules")`
+              // — a path at the filesystem root — instead of failing.
+              resolveAlias(subpathAlias, {
+                [alias]: assertResolved(alias, resolve(opts)),
+              }),
           ];
         }),
       ];

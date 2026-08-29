@@ -1,2 +1,3 @@
 export * from "./filename";
-export * from "./fs";
+export * from "./createFile";
+export * from "./isFileWritable";
