@@ -63,6 +63,7 @@
   },
   "dependencies": {
     "async-cache-fn": "^0.0.3",
+    "confbox": "^0.2.4",
     "execa": "^10.0.1",
     "find-up": "^8.0.0",
     "globby": "^16.2.4",

@@ -38,6 +38,9 @@ importers:
       async-cache-fn:
         specifier: ^0.0.3
         version: 0.0.3
+      confbox:
+        specifier: ^0.2.4
+        version: 0.2.4
       execa:
         specifier: ^10.0.1
         version: 10.0.1
