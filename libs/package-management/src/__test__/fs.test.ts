@@ -4,6 +4,7 @@ import os from "node:os";
 import process from "node:process";
 import { join } from "pathe";
 import { createFile } from "@/fs/createFile";
+import { readFile, readFileSafely } from "@/fs/readFile";
 import { isWritable } from "@/fs/isFileWritable";
 import { getFilenameFromPath } from "@/path/getFilenameFromPath";
 import { gitignore } from "@/gitignore";
@@ -39,6 +40,44 @@ describe("createFile", () => {
     createFile(target, "encoded", "utf-8");
 
     expect(readFileSync(target, "utf-8")).toBe("encoded");
+  });
+});
+
+describe("readFile", () => {
+  it("reads a file back as text", () => {
+    const target = join(scratchRoot, "readable.txt");
+
+    createFile(target, "contents");
+
+    expect(readFile(target)).toBe("contents");
+  });
+
+  it("throws for a file that does not exist", () => {
+    expect(() => readFile(join(scratchRoot, "absent.txt"))).toThrow();
+  });
+});
+
+describe("readFileSafely", () => {
+  it("reads a file that exists", () => {
+    const target = join(scratchRoot, "safely.txt");
+
+    createFile(target, "contents");
+
+    expect(readFileSafely(target)).toBe("contents");
+  });
+
+  it("answers undefined for a file that does not exist", () => {
+    // A config a tool has never written is absent, not empty, and a caller
+    // seeding one should not have to catch a throw to learn that.
+    expect(readFileSafely(join(scratchRoot, "absent.txt"))).toBeUndefined();
+  });
+
+  it("distinguishes an absent file from an empty one", () => {
+    const target = join(scratchRoot, "empty.txt");
+
+    createFile(target, "");
+
+    expect(readFileSafely(target)).toBe("");
   });
 });
 
