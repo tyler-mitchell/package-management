@@ -2,6 +2,13 @@
 
 
 
+
+## 0.2.0
+<sub>2026-09-01</sub>
+
+- *(minor)* Added config parsing and editing for JSON, JSONC, JSON5, YAML, and TOML.
+- *(minor)* Added synchronous file readers with an optional missing-file result.
+
 ## 0.1.0
 <sub>2026-08-29</sub>
 
